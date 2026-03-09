@@ -238,8 +238,9 @@ export default function ShopProps() {
         @media(min-width:769px) { .mobmenu { display:none !important; } .mobonly { display:none !important; } }
       `}</style>
       <div style={S.navInner}>
-        <div style={S.logo} onClick={() => nav("home")}>
-          <span style={{color:CYAN}}>SHOP</span>PROPS<span style={{color:CYAN, fontSize:14}}>.com</span>
+        <div style={{cursor:"pointer",display:"flex",alignItems:"center",gap:8}} onClick={() => nav("home")}>
+          <img src="/shop_props_logo.png" alt="ShopProps" style={{height:36,width:"auto"}} />
+          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:"#fff",letterSpacing:1}}><span style={{color:CYAN}}>SHOP</span>PROPS</span>
         </div>
         <div style={S.navLinks} className="deskonly">
           {[["home","Home"],["firms","All Firms"],["compare","Compare"],["deals","Deals"],["blog","Blog"],["learn","Learn"]].map(([p,l]) => (
@@ -742,7 +743,7 @@ export default function ShopProps() {
         <button className="navhov" style={{...S.navLink,marginBottom:24}} onClick={() => nav("blog")}>← Back to Blog</button>
         <Badge>{p.category}</Badge>
         <h1 style={{...S.h2,fontSize:"clamp(1.8rem,4vw,2.5rem)",marginTop:12,marginBottom:8,lineHeight:1.2}}>{p.title}</h1>
-        <div style={{...S.mono,fontSize:11,color:MUTED,marginBottom:32}}>{p.readTime} read · {p.date} · shopprops.com</div>
+        <div style={{display:"flex",alignItems:"center",gap:8,...S.mono,fontSize:11,color:MUTED,marginBottom:32}}><img src="/shop_props_logo.png" alt="" style={{height:16,width:"auto"}} /> {p.readTime} read · {p.date} · shopprops.co</div>
 
         <div style={{fontSize:15,lineHeight:1.8,color:TEXT}}>
           {p.content.split("\n\n").map((para, i) => (
@@ -820,7 +821,10 @@ export default function ShopProps() {
       <div style={{maxWidth:1200,margin:"0 auto"}}>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:32,marginBottom:40}}>
           <div>
-            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:"#fff",marginBottom:12}}><span style={{color:CYAN}}>SHOP</span>PROPS</div>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+              <img src="/shop_props_logo.png" alt="ShopProps" style={{height:32,width:"auto"}} />
+              <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:"#fff"}}><span style={{color:CYAN}}>SHOP</span>PROPS</span>
+            </div>
             <p style={{fontSize:13,color:MUTED,lineHeight:1.6}}>Independent prop firm intelligence. No pay-to-rank. Updated monthly.</p>
           </div>
           <div>
