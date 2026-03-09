@@ -616,13 +616,24 @@ return (
                   })}
                 </tr>
               ))}
-              {/* Promo row */}
+              {/* Promo + Visit row */}
               <tr style={{borderTop:`1px solid ${CYAN}20`,background:`${CYAN}05`}}>
-                <td style={{...S.mono,fontSize:11,color:CYAN,padding:"16px",letterSpacing:1}}>PROMO CODE</td>
+                <td style={{fontSize:12,fontWeight:600,color:CYAN,padding:"16px",letterSpacing:1,textTransform:"uppercase"}}>Get Started</td>
                 {toCompare.map(f => (
                   <td key={f.id} style={{padding:"16px",textAlign:"center"}}>
-                    <div style={{...S.mono,fontSize:16,fontWeight:700,color:CYAN,marginBottom:8}}>{PROMO}</div>
-                    <CopyBtn id={`cmp-${f.id}`} copied={copied} onCopy={handleCopy} />
+                    {f.affiliate !== "#" ? (
+                      <>
+                        <button style={{...S.btn,width:"100%",fontSize:13,padding:"12px",marginBottom:8}} onClick={() => window.open(f.affiliate,"_blank")}>
+                          Visit {f.name} →
+                        </button>
+                        <div style={{fontSize:11,color:MUTED,marginTop:4}}>+ use code <strong style={{color:CYAN}}>{PROMO}</strong></div>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{fontSize:16,fontWeight:700,color:CYAN,marginBottom:8}}>{PROMO}</div>
+                        <CopyBtn id={`cmp-${f.id}`} copied={copied} onCopy={handleCopy} />
+                      </>
+                    )}
                   </td>
                 ))}
               </tr>
