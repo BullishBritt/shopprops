@@ -161,7 +161,7 @@ const Stars = ({ r, size = 13 }) => (
 );
 
 const Badge = ({ children, color = CYAN, bg }) => (
-  <span style={{ display:"inline-block", padding:"3px 10px", fontFamily:"'Space Mono',monospace", fontSize:10, letterSpacing:2, textTransform:"uppercase", border:`1px solid ${color}40`, color, background: bg || "transparent", borderRadius: 2 }}>{children}</span>
+  <span style={{ display:"inline-block", padding:"4px 12px", fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:600, letterSpacing:1.5, textTransform:"uppercase", border:`1px solid ${color}40`, color, background: bg || "transparent", borderRadius: 4 }}>{children}</span>
 );
 
 const CopyBtn = ({ id, copied, onCopy, full }) => (
@@ -333,27 +333,27 @@ export default function ShopProps() {
               <thead>
                 <tr style={{borderBottom:`1px solid ${BORDER}`}}>
                   {["Firm","Rating","50K Price","Drawdown","Payout Split","Payout Speed"].map(h => (
-                    <th key={h} style={{...S.mono,fontSize:10,letterSpacing:2,color:MUTED,textTransform:"uppercase",padding:"14px 16px",textAlign:"left"}}>{h}</th>
+                    <th key={h} style={{...S.mono,fontSize:12,letterSpacing:2,color:MUTED,textTransform:"uppercase",padding:"16px 20px",textAlign:"left"}}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {FIRMS.sort((a,b) => b.rating - a.rating).map(f => (
                   <tr key={f.id} style={{borderBottom:`1px solid ${BORDER}10`,cursor:"pointer"}} onClick={() => nav("firm-detail",{firm:f.id})} className="cardhov">
-                    <td style={{padding:"16px"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        <FirmLogo id={f.id} size={28} />
+                    <td style={{padding:"18px 20px"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:12}}>
+                        <FirmLogo id={f.id} size={32} />
                         <div>
-                          <div style={{fontWeight:600,color:"#fff",fontSize:14}}>{f.name}</div>
-                          <div style={{...S.mono,fontSize:10,color:MUTED}}>{f.eval}</div>
+                          <div style={{fontWeight:700,color:"#fff",fontSize:16}}>{f.name}</div>
+                          <div style={{fontSize:12,color:MUTED,marginTop:2}}>{f.eval}</div>
                         </div>
                       </div>
                     </td>
-                    <td style={{padding:"16px"}}><span style={{...S.mono,fontWeight:700,color:"#fff"}}>{f.rating}</span> <Stars r={f.rating} size={11}/></td>
-                    <td style={{...S.mono,fontSize:13,color:CYAN,padding:"16px",fontWeight:700}}>{f.price50k}</td>
-                    <td style={{padding:"16px"}}><Badge color={f.drawdownType.includes("EOD")?"#22c55e":f.drawdownType.includes("Static")?"#a78bfa":"#f59e0b"}>{f.drawdownType.split(" ")[0]}</Badge></td>
-                    <td style={{...S.mono,fontSize:13,color:"#fff",padding:"16px"}}>{f.profitSplit}</td>
-                    <td style={{...S.mono,fontSize:12,color:MUTED,padding:"16px"}}>{f.payoutSpeed}</td>
+                    <td style={{padding:"18px 20px"}}><span style={{fontSize:18,fontWeight:700,color:"#fff"}}>{f.rating}</span> <Stars r={f.rating} size={14}/></td>
+                    <td style={{fontSize:15,color:CYAN,padding:"18px 20px",fontWeight:700}}>{f.price50k}</td>
+                    <td style={{padding:"18px 20px"}}><Badge color={f.drawdownType.includes("EOD")?"#22c55e":f.drawdownType.includes("Static")?"#a78bfa":"#f59e0b"}>{f.drawdownType.split(" ")[0]}</Badge></td>
+                    <td style={{fontSize:15,color:"#fff",padding:"18px 20px",fontWeight:500}}>{f.profitSplit}</td>
+                    <td style={{fontSize:14,color:TEXT,padding:"18px 20px"}}>{f.payoutSpeed}</td>
                   </tr>
                 ))}
               </tbody>
@@ -460,20 +460,20 @@ export default function ShopProps() {
               {f.nfa && <Badge color="#22c55e">NFA</Badge>}
             </div>
 
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
               {[["50K Price",f.price50k],["Drawdown",f.drawdownType.split(" ")[0]],["Split",f.profitSplit],["Payout",f.payoutSpeed],["Max Acct",f.maxAccount],["Activation",f.activationFee]].map(([l,v]) => (
                 <div key={l}>
-                  <div style={{...S.mono,fontSize:9,color:MUTED,letterSpacing:1,textTransform:"uppercase",marginBottom:2}}>{l}</div>
-                  <div style={{...S.mono,fontSize:12,color:v==="$0"?"#22c55e":"#fff",fontWeight:600}}>{v}</div>
+                  <div style={{fontSize:11,color:MUTED,fontWeight:500,textTransform:"uppercase",marginBottom:3}}>{l}</div>
+                  <div style={{fontSize:14,color:v==="$0"?"#22c55e":"#fff",fontWeight:600}}>{v}</div>
                 </div>
               ))}
             </div>
 
-            <p style={{fontSize:12,color:MUTED,lineHeight:1.6,marginBottom:16}}>{f.desc.slice(0,140)}...</p>
+            <p style={{fontSize:14,color:MUTED,lineHeight:1.6,marginBottom:16}}>{f.desc.slice(0,140)}...</p>
 
             <div style={{display:"flex",gap:8}}>
-              <button style={{...S.btn,flex:1,fontSize:11,padding:"10px"}} onClick={() => nav("firm-detail",{firm:f.id})}>Full Review</button>
-              <button style={{...S.btn,flex:1,fontSize:11,padding:"10px",background:`${CYAN}20`,color:CYAN}} onClick={() => f.affiliate !== "#" ? window.open(f.affiliate,"_blank") : handleCopy(f.id)}>
+              <button style={{...S.btn,flex:1,fontSize:13,padding:"12px"}} onClick={() => nav("firm-detail",{firm:f.id})}>Full Review</button>
+              <button style={{...S.btn,flex:1,fontSize:13,padding:"12px",background:`${CYAN}20`,color:CYAN}} onClick={() => f.affiliate !== "#" ? window.open(f.affiliate,"_blank") : handleCopy(f.id)}>
                 {f.affiliate !== "#" ? "Visit Site →" : copied === f.id ? "✓ Copied!" : `Code: ${PROMO}`}
               </button>
             </div>
@@ -515,12 +515,12 @@ export default function ShopProps() {
               <table style={{width:"100%",borderCollapse:"collapse",minWidth:toCompare.length*220}}>
                 <thead>
                   <tr style={{borderBottom:`1px solid ${BORDER}`}}>
-                    <th style={{...S.mono,fontSize:10,color:MUTED,padding:"16px",textAlign:"left",minWidth:150,letterSpacing:2}}>FEATURE</th>
+                    <th style={{fontSize:12,fontWeight:600,color:MUTED,padding:"16px",textAlign:"left",minWidth:150,letterSpacing:1,textTransform:"uppercase"}}>FEATURE</th>
                     {toCompare.map(f => (
                       <th key={f.id} style={{padding:"16px",textAlign:"center",minWidth:180}}>
-                        <FirmLogo id={f.id} size={32} />
-                        <div style={{fontWeight:700,color:"#fff",marginTop:4}}>{f.name}</div>
-                        <div style={{...S.mono,fontSize:10,color:MUTED}}>{f.rating} ★</div>
+                        <FirmLogo id={f.id} size={36} />
+                        <div style={{fontWeight:700,color:"#fff",marginTop:6,fontSize:15}}>{f.name}</div>
+                        <div style={{fontSize:13,color:MUTED,marginTop:2}}>{f.rating} ★</div>
                       </th>
                     ))}
                   </tr>
@@ -528,13 +528,13 @@ export default function ShopProps() {
                 <tbody>
                   {fields.map(([label, key], i) => (
                     <tr key={key} style={{borderBottom:`1px solid ${BORDER}10`,background:i%2===0?"transparent":`${CARD}`}}>
-                      <td style={{...S.mono,fontSize:11,color:MUTED,padding:"12px 16px",letterSpacing:1}}>{label}</td>
+                      <td style={{fontSize:13,fontWeight:500,color:MUTED,padding:"14px 16px"}}>{label}</td>
                       {toCompare.map(f => {
                         let val = f[key];
                         if (typeof val === "boolean") val = val ? "✓ Yes" : "✗ No";
                         const isGood = val === "✓ Yes" || val === "$0" || val === "No" && key === "dailyLossLimit";
                         return (
-                          <td key={f.id} style={{...S.mono,fontSize:12,color:isGood?"#22c55e":"#fff",padding:"12px 16px",textAlign:"center",fontWeight:500}}>
+                          <td key={f.id} style={{fontSize:14,color:isGood?"#22c55e":"#fff",padding:"14px 16px",textAlign:"center",fontWeight:500}}>
                             {val}
                           </td>
                         );
@@ -659,8 +659,8 @@ export default function ShopProps() {
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:12,marginBottom:32}}>
           {[["Eval Price",f.price50k],["Evaluation Type",f.eval],["Profit Target",f.profitTarget50k],["Max Loss",f.maxLoss50k],["Drawdown Type",f.drawdownType],["Daily Loss Limit",f.dailyLossLimit],["Profit Split",f.profitSplit],["First Profits",f.first10k],["Payout Speed",f.payoutSpeed],["Payout Frequency",f.payoutFreq],["Min Payout Days",f.minPayoutDays+" days"],["Max Accounts",f.maxAccounts],["Activation Fee",f.activationFee],["Max Account Size",f.maxAccount],["Payout Cap",f.payoutCap]].map(([l,v]) => (
             <div key={l} style={S.card}>
-              <div style={{...S.mono,fontSize:9,color:MUTED,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>{l}</div>
-              <div style={{...S.mono,fontSize:14,color:String(v)==="$0"||String(v).includes("No")&&l.includes("Daily")?"#22c55e":"#fff",fontWeight:600}}>{String(v)}</div>
+              <div style={{fontSize:12,color:MUTED,fontWeight:500,textTransform:"uppercase",marginBottom:6}}>{l}</div>
+              <div style={{fontSize:16,color:String(v)==="$0"||String(v).includes("No")&&l.includes("Daily")?"#22c55e":"#fff",fontWeight:600}}>{String(v)}</div>
             </div>
           ))}
         </div>
@@ -670,8 +670,8 @@ export default function ShopProps() {
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:12,marginBottom:32}}>
           {[["Platforms",f.platforms],["Swing Trading",f.swingTrading],["News Trading",f.newsTrading],["Scalping",f.scalping],["Consistency Rule",f.consistency]].map(([l,v]) => (
             <div key={l} style={S.card}>
-              <div style={{...S.mono,fontSize:9,color:MUTED,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>{l}</div>
-              <div style={{...S.mono,fontSize:13,color:v==="Yes"||v==="No"&&l==="Consistency Rule"?"#22c55e":"#fff",fontWeight:500}}>{v}</div>
+              <div style={{fontSize:12,color:MUTED,fontWeight:500,textTransform:"uppercase",marginBottom:6}}>{l}</div>
+              <div style={{fontSize:15,color:v==="Yes"||v==="No"&&l==="Consistency Rule"?"#22c55e":"#fff",fontWeight:500}}>{v}</div>
             </div>
           ))}
         </div>
@@ -679,12 +679,12 @@ export default function ShopProps() {
         {/* Pros/Cons */}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:32}}>
           <div style={S.card}>
-            <h4 style={{color:"#22c55e",...S.mono,fontSize:12,letterSpacing:1,marginBottom:12}}>✓ PROS</h4>
-            {f.pros.map(p => <div key={p} style={{fontSize:13,color:TEXT,marginBottom:8}}>• {p}</div>)}
+            <h4 style={{color:"#22c55e",fontSize:14,fontWeight:700,letterSpacing:1,marginBottom:12}}>✓ PROS</h4>
+            {f.pros.map(p => <div key={p} style={{fontSize:15,color:TEXT,marginBottom:10,lineHeight:1.5}}>• {p}</div>)}
           </div>
           <div style={S.card}>
-            <h4 style={{color:"#ef4444",...S.mono,fontSize:12,letterSpacing:1,marginBottom:12}}>✗ CONS</h4>
-            {f.cons.map(c => <div key={c} style={{fontSize:13,color:TEXT,marginBottom:8}}>• {c}</div>)}
+            <h4 style={{color:"#ef4444",fontSize:14,fontWeight:700,letterSpacing:1,marginBottom:12}}>✗ CONS</h4>
+            {f.cons.map(c => <div key={c} style={{fontSize:15,color:TEXT,marginBottom:10,lineHeight:1.5}}>• {c}</div>)}
           </div>
         </div>
 
