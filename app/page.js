@@ -100,7 +100,7 @@ const FIRMS = [
         {size:"150K",price:"$59.55 (w/ coupon)",target:"$9,000",drawdown:"$4,000",dll:"$2,000",consistency:"No",contracts:"12 mini / 120 micro",activation:"Built-in",note:"One-time fee, expires 30 days, no resets"},
       ]},
     ]},
-  { id:"topone", name:"Top One Futures", logo:"1", founded:2023, hq:"United States", rating:4.4, eval:"Multiple Types", price50k:"$105/mo (Elite)", profitTarget50k:"$3,000", maxLoss50k:"$2,000", drawdownType:"EOD Trailing", dailyLossLimit:"Yes", profitSplit:"90/10", first10k:"90/10", payoutSpeed:"3-5 days", payoutFreq:"After requirements met", minPayoutDays:5, maxAccounts:5, platforms:"Tradovate, NinjaTrader", swingTrading:"No", newsTrading:"Yes", scalping:"Yes", consistency:"No", activationFee:"$0", maxAccount:"$150,000", payoutCap:"Progressive", nfa:false, featured:true, affiliate:"https://toponefutures.com/?linkId=lp_707970&sourceId=britt&tenantId=toponefutures",
+  { id:"topone", name:"Top One Futures", logo:"1", founded:2023, hq:"United States", rating:4.4, eval:"Multiple Types", price50k:"$105/mo (Elite)", profitTarget50k:"$3,000", maxLoss50k:"$2,000", drawdownType:"EOD Trailing", dailyLossLimit:"Yes", profitSplit:"90/10", first10k:"90/10", payoutSpeed:"3-5 days", payoutFreq:"After requirements met", minPayoutDays:5, maxAccounts:15, platforms:"Tradovate, NinjaTrader", swingTrading:"No", newsTrading:"Yes", scalping:"Yes", consistency:"No", activationFee:"$0", maxAccount:"$150,000", payoutCap:"Progressive", nfa:false, featured:true, affiliate:"https://toponefutures.com/?linkId=lp_707970&sourceId=britt&tenantId=toponefutures",
     desc:"The best instant funded options in the prop firm space. Five account types including Instant Sim Funded and Ignite IF that let you skip evaluations entirely. Stack up to 15 accounts on some instant plans. Also offers Elite Challenge (monthly eval), S2F Sim PRO, and Elite Daily. All on Tradovate/NinjaTrader.",
     pros:["Best instant funded options","Up to 15 accounts on instant plans","5 distinct account types","No evaluation needed (Instant/Ignite)","EOD drawdown","Tradovate/NinjaTrader support"],
     cons:["Newer firm","Limited to 2 platforms","Progressive payout caps"],
@@ -270,7 +270,7 @@ export default function ShopProps() {
     if (filterDraw !== "all") f = f.filter(x => filterDraw === "eod" ? x.drawdownType.includes("EOD") : filterDraw === "intraday" ? x.drawdownType.includes("Intraday") : x.drawdownType.includes("Static"));
     if (filterDLL !== "all") f = f.filter(x => filterDLL === "no" ? x.dailyLossLimit === "No" || x.dailyLossLimit.includes("No") : x.dailyLossLimit === "Yes" || x.dailyLossLimit.includes("Yes"));
     if (searchQ) f = f.filter(x => x.name.toLowerCase().includes(searchQ.toLowerCase()));
-    f.sort((a, b) => sortBy === "rating" ? b.rating - a.rating : sortBy === "price" ? parseInt(a.price50k.replace(/[^0-9]/g,"")) - parseInt(b.price50k.replace(/[^0-9]/g,"")) : sortBy === "payout" ? a.minPayoutDays - b.minPayoutDays : a.name.localeCompare(b.name));
+    f.sort((a, b) => sortBy === "rating" ? b.rating - a.rating : sortBy === "price" ? parseInt(a.price50k.replace(/[^0-9]/g,"")) - parseInt(b.price50k.replace(/[^0-9]/g,"")) : sortBy === "payout" ? a.minPayoutDays - b.minPayoutDays : sortBy === "accounts" ? b.maxAccounts - a.maxAccounts : a.name.localeCompare(b.name));
     return f;
   }, [sortBy, filterDraw, filterDLL, searchQ]);
 
@@ -415,7 +415,7 @@ export default function ShopProps() {
             <table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}>
               <thead>
                 <tr style={{borderBottom:`1px solid ${BORDER}`}}>
-                  {["Firm","Rating","50K Price","Drawdown","Payout Split","Payout Speed"].map(h => (
+                  {["Firm","Rating","50K Price","Drawdown","Split","Payout Speed","Max Accounts"].map(h => (
                     <th key={h} style={{...S.mono,fontSize:12,letterSpacing:2,color:MUTED,textTransform:"uppercase",padding:"16px 20px",textAlign:"left"}}>{h}</th>
                   ))}
                 </tr>
@@ -437,6 +437,7 @@ export default function ShopProps() {
                     <td style={{padding:"18px 20px"}}><Badge color={f.drawdownType.includes("EOD")?"#22c55e":f.drawdownType.includes("Static")?"#a78bfa":"#f59e0b"}>{f.drawdownType.split(" ")[0]}</Badge></td>
                     <td style={{fontSize:15,color:"#fff",padding:"18px 20px",fontWeight:500}}>{f.profitSplit}</td>
                     <td style={{fontSize:14,color:TEXT,padding:"18px 20px"}}>{f.payoutSpeed}</td>
+                    <td style={{fontSize:16,color:f.maxAccounts>=15?CYAN:f.maxAccounts>=10?"#22c55e":"#fff",padding:"18px 20px",fontWeight:700}}>{f.maxAccounts}</td>
                   </tr>
                 ))}
               </tbody>
@@ -486,7 +487,7 @@ export default function ShopProps() {
       {/* Filters */}
       <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
         <span style={{...S.mono,fontSize:10,color:MUTED,alignSelf:"center",marginRight:8}}>SORT:</span>
-        {[["rating","Rating"],["price","Cheapest"],["payout","Fastest Payout"],["name","A-Z"]].map(([v,l]) => (
+        {[["rating","Rating"],["price","Cheapest"],["payout","Fastest Payout"],["accounts","Most Accounts"],["name","A-Z"]].map(([v,l]) => (
           <button key={v} className={`filtbtn ${sortBy===v?"on":""}`} onClick={() => setSortBy(v)}>{l}</button>
         ))}
       </div>
@@ -543,11 +544,11 @@ export default function ShopProps() {
               {f.nfa && <Badge color="#22c55e">NFA</Badge>}
             </div>
 
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-              {[["50K Price",f.price50k],["Drawdown",f.drawdownType.split(" ")[0]],["Split",f.profitSplit],["Payout",f.payoutSpeed],["Max Acct",f.maxAccount],["Activation",f.activationFee]].map(([l,v]) => (
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
+              {[["50K Price",f.price50k],["Drawdown",f.drawdownType.split(" ")[0]],["Split",f.profitSplit],["Payout",f.payoutSpeed],["Max Accounts",String(f.maxAccounts)],["Activation",f.activationFee]].map(([l,v]) => (
                 <div key={l}>
                   <div style={{fontSize:11,color:MUTED,fontWeight:500,textTransform:"uppercase",marginBottom:3}}>{l}</div>
-                  <div style={{fontSize:14,color:v==="$0"?"#22c55e":"#fff",fontWeight:600}}>{v}</div>
+                  <div style={{fontSize:14,color:v==="$0"||v==="FREE"?"#22c55e":l==="Max Accounts"&&parseInt(v)>=15?CYAN:"#fff",fontWeight:600}}>{v}</div>
                 </div>
               ))}
             </div>
