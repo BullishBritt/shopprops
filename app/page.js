@@ -17,23 +17,25 @@ const TEXT = "#cbd5e1";
 // ── PROP FIRM DATA ──────────────────────────────────────────
 const FIRMS = [
   // ── TOP 5 FEATURED ──
-  { id:"tradeify", name:"Tradeify", logo:"T", founded:2024, hq:"United States", rating:4.8, eval:"1-Step / Instant", price50k:"$111/mo (Select)", profitTarget50k:"$2,500", maxLoss50k:"$2,000", drawdownType:"EOD Trailing", dailyLossLimit:"None (Select eval)", profitSplit:"90/10 (up to 100%)", first10k:"90/10", payoutSpeed:"Same day", payoutFreq:"Daily or 5-day (plan dependent)", minPayoutDays:5, maxAccounts:10, platforms:"NinjaTrader, Tradovate, TradingView, WealthCharts", swingTrading:"Plan dependent", newsTrading:"Yes", scalping:"Yes", consistency:"40% (Select eval)", activationFee:"$0", maxAccount:"$150,000", payoutCap:"$1K-$5K per cycle", nfa:false, featured:true, affiliate:"https://tradeify.co/?ref=britt",
+  { id:"tradeify", name:"Tradeify", logo:"T", founded:2024, hq:"United States", rating:4.8, eval:"1-Step / Instant", price50k:"$111/mo (Select)", profitTarget50k:"$2,500", maxLoss50k:"$2,000", drawdownType:"EOD Trailing", dailyLossLimit:"None (Select eval)", profitSplit:"90/10 (up to 100%)", first10k:"90/10", payoutSpeed:"Same day", payoutFreq:"Daily or 5-day (plan dependent)", minPayoutDays:5, maxAccounts:5, platforms:"NinjaTrader, Tradovate, TradingView, WealthCharts", swingTrading:"Plan dependent", newsTrading:"Yes", scalping:"Yes", consistency:"40% (Select eval)", activationFee:"$0", maxAccount:"$150,000", payoutCap:"$1K-$5K per cycle", nfa:false, featured:true, affiliate:"https://tradeify.co/?ref=britt",
     desc:"One of the most reliable and well-rounded prop firms in the industry. More options for traders than almost any other firm: Select (evaluation with Daily or Flex funded path), Growth (1-day funding, no eval consistency), and Lightning (instant funded, no evaluation needed). Zero activation fees across all plans. 1-hour payout processing. 50,000+ active traders and growing.",
     pros:["Most options for every trading style","$0 activation fee on all plans","1-hour payout processing","50,000+ active traders","Select/Growth/Lightning paths","Up to 100% profit split"],
     cons:["Newer firm (2024)","Consistency rule in Select eval","Lightning accounts can't reset"],
     plans:[
       {name:"Select",type:"Evaluation",sizes:[
+        {size:"25K",price:"$65/mo",target:"$1,500",drawdown:"$1,000",dll:"None",consistency:"40%",contracts:"2 mini / 20 micro",activation:"$0",fundedDaily:{dll:"$500",maxPayout:"$500"},fundedFlex:{dll:"None",maxPayout:"$1,500"}},
         {size:"50K",price:"$111/mo",target:"$2,500",drawdown:"$2,000",dll:"None",consistency:"40%",contracts:"4 mini / 40 micro",activation:"$0",fundedDaily:{dll:"$1,000",maxPayout:"$1,000"},fundedFlex:{dll:"None",maxPayout:"$3,000"}},
         {size:"100K",price:"$181/mo",target:"$6,000",drawdown:"$3,000",dll:"None",consistency:"40%",contracts:"8 mini / 80 micro",activation:"$0",fundedDaily:{dll:"$1,250",maxPayout:"$1,500"},fundedFlex:{dll:"None",maxPayout:"$4,000"}},
         {size:"150K",price:"$251/mo",target:"$9,000",drawdown:"$4,500",dll:"None",consistency:"40%",contracts:"12 mini / 120 micro",activation:"$0",fundedDaily:{dll:"$1,750",maxPayout:"$2,500"},fundedFlex:{dll:"None",maxPayout:"$5,000"}},
       ]},
       {name:"Growth",type:"Evaluation (1-day funding)",sizes:[
+        {size:"25K",price:"$59/mo",target:"$1,500",drawdown:"$1,000",dll:"$625",consistency:"None (eval)",contracts:"2 mini / 20 micro",activation:"$0",note:"35% consistency when funded, 5-day payouts"},
         {size:"50K",price:"$97/mo",target:"$3,000",drawdown:"$2,000",dll:"$1,250",consistency:"None (eval)",contracts:"4 mini / 40 micro",activation:"$0",note:"35% consistency when funded, 5-day payouts"},
         {size:"100K",price:"$174/mo",target:"$6,000",drawdown:"$3,500",dll:"$2,500",consistency:"None (eval)",contracts:"8 mini / 80 micro",activation:"$0",note:"35% consistency when funded, 5-day payouts"},
         {size:"150K",price:"$251/mo",target:"$9,000",drawdown:"$5,000",dll:"$3,750",consistency:"None (eval)",contracts:"12 mini / 120 micro",activation:"$0",note:"35% consistency when funded, 5-day payouts"},
       ]},
       {name:"Lightning",type:"Instant Funded (no eval)",sizes:[
-        {size:"25K",price:"$230 (one-time)",target:"N/A",drawdown:"$1,000",dll:"None",consistency:"20%",contracts:"1 mini / 10 micro",activation:"$0"},
+        {size:"25K",price:"$207 (one-time)",target:"N/A",drawdown:"$1,000",dll:"None",consistency:"20%",contracts:"1 mini / 10 micro",activation:"$0"},
         {size:"50K",price:"$328 (one-time)",target:"N/A",drawdown:"$2,000",dll:"$1,250",consistency:"20%",contracts:"4 mini / 40 micro",activation:"$0"},
         {size:"100K",price:"$440 (one-time)",target:"N/A",drawdown:"$4,000",dll:"$2,500",consistency:"20%",contracts:"8 mini / 80 micro",activation:"$0"},
       ]},
@@ -127,7 +129,7 @@ const BLOG_POSTS = [
   { id:"platforms-guide", slug:"trading-platforms-for-prop-firms", title:"Trading Platforms Guide: NinjaTrader vs Tradovate vs Rithmic", category:"Education", readTime:"7 min", date:"Mar 2026", excerpt:"Which trading platform should you use for prop firm trading? Here's the complete breakdown of compatibility, features, and costs.", content:`Your choice of trading platform affects your experience, costs, and which prop firms you can trade with.\n\nNinjaTrader is the most widely supported platform across prop firms. It offers advanced charting, custom indicators, and automated strategy capabilities. Most firms support NinjaTrader through either Tradovate or Rithmic data connections. Free to use for sim trading; license required for live.\n\nTradovate is a web-based platform that works on any device. It's the most accessible option — no downloads required, works on Mac and iOS natively. Simpler than NinjaTrader but covers all essential features. Supported by Apex, Tradeify, Lucid, MFF, and others.\n\nRithmic is the data provider favored by many professional traders for its speed and reliability. It's not a platform itself but connects to platforms like NinjaTrader, Quantower, and Sierra Chart. Known for the fastest market data and order execution.\n\nTradingView integration is growing — Tradeify, Lucid, and Take Profit Trader now support it. Great for traders who already use TradingView for charting.\n\n\n\nFor beginners: start with Tradovate (web-based, easy to learn). For advanced traders: NinjaTrader with Rithmic data gives you the most control and fastest execution.` },
   { id:"news-trading", slug:"news-trading-prop-firms", title:"Can You Trade News on a Prop Firm Account?", category:"Education", readTime:"5 min", date:"Mar 2026", excerpt:"Most prop firms allow news trading, but the rules vary. Here's what you can and can't do during major economic releases.", content:`News trading — trading around major economic releases like FOMC, NFP, and CPI — is allowed by most prop firms, but with important caveats.\n\nFirms that allow news trading: Apex, Tradeify, Lucid, MFF, Take Profit Trader, Bulenox, and most others.\n\nHowever, "allowed" doesn't mean "recommended." Major news events create extreme volatility that can breach accounts in seconds, especially on accounts with intraday trailing drawdown. A 50-point NQ spike can wipe out your entire drawdown cushion before you can react.\n\nBest practices for news trading on prop accounts: reduce position size significantly (1 micro instead of 1 mini), widen your stop losses, be flat before the release and enter after the initial spike settles, and never risk more than 25% of your available drawdown on a news trade.\n\nSome firms have specific restrictions: certain platforms may widen spreads or reduce leverage during high-impact news. Always check your firm's specific policies.\n\nIf you're on an EOD drawdown account, news trading is more manageable because intraday spikes don't count against you if the market recovers by close.` },
   { id:"consistency-rules", slug:"consistency-rules-explained", title:"Consistency Rules: The Rule That Trips Up Most Traders", category:"Education", readTime:"6 min", date:"Mar 2026", excerpt:"Some prop firms require that no single day accounts for more than 30-50% of your total profit. Here's how to navigate consistency rules.", content:`Consistency rules prevent you from hitting your profit target with one or two massive winning days. They exist to ensure you can trade profitably over multiple sessions, not just get lucky.\n\nHow it works: if your profit target is $3,000 and the consistency rule is 50%, no single day can account for more than $1,500 of your total profit. If you make $2,000 on day one, you've technically "passed" if you make $1,000 more — but your $2,000 day exceeds 50% of $3,000, so you need to keep trading until that day represents less than 50% of your total.\n\nFirms with consistency rules: Tradeify (50% during eval), Lucid LucidFlex (50% during eval, none when funded), FundedNext (40%), Lucid LucidPro (varies).\n\nFirms WITHOUT consistency rules: Apex, My Funded Futures, Take Profit Trader, Bulenox.\n\nStrategy for passing with a consistency rule: aim for roughly equal daily profits. If your target is $3,000 with 50% consistency, target $500-$600 per day for 5-6 days. This natural approach builds good habits and increases your survival rate when funded.\n\nConsistency rules are controversial. Critics say they penalize exceptional trading days. Supporters argue they filter out gambling behavior. Either way, knowing whether your firm has one is essential before you start.` },
-  { id:"account-stacking", slug:"account-stacking-strategy", title:"Account Stacking: Running Multiple Prop Firm Accounts", category:"Strategy", readTime:"6 min", date:"Mar 2026", excerpt:"Advanced traders run multiple funded accounts simultaneously to multiply their income. Here's how account stacking works and which firms support it.", content:`Account stacking — running multiple funded accounts at the same time — is one of the most powerful strategies for maximizing prop firm income.\n\nThe concept is simple: if you can consistently profit on one 50K account, running 5 or 10 accounts with the same strategy multiplies your income proportionally.\n\nApex Trader Funding leads here, allowing up to 20 simultaneous accounts. At 20 accounts, a $500 daily profit per account becomes $10,000/day. This is why Apex is popular among experienced traders despite its slower payouts.\n\nOther firms' account limits: (5 accounts), Tradeify (10), Lucid (10), MFF (5) (5).\n\nImportant rules: Most firms prohibit fully automated "set and forget" bots on funded accounts. Apex specifically allows semi-automated execution tools but bans fully automated trading. You need to manually initiate or confirm trades.\n\nTrade copiers like CrossTrade allow you to place a trade on one platform and have it automatically replicate across multiple accounts. This is the standard approach for account stacking.\n\nCosts add up: 10 Apex accounts at $35 each = $350 for evaluations, plus 10 × $160 activation = $1,600 total. But if each account generates $5,000/month in profits, the ROI is extraordinary.` },
+  { id:"account-stacking", slug:"account-stacking-strategy", title:"Account Stacking: Running Multiple Prop Firm Accounts", category:"Strategy", readTime:"6 min", date:"Mar 2026", excerpt:"Advanced traders run multiple funded accounts simultaneously to multiply their income. Here's how account stacking works and which firms support it.", content:`Account stacking — running multiple funded accounts at the same time — is one of the most powerful strategies for maximizing prop firm income.\n\nThe concept is simple: if you can consistently profit on one 50K account, running 5 or 10 accounts with the same strategy multiplies your income proportionally.\n\nApex Trader Funding leads here, allowing up to 20 simultaneous accounts. At 20 accounts, a $500 daily profit per account becomes $10,000/day. This is why Apex is popular among experienced traders despite its slower payouts.\n\nOther firms' account limits: (5 accounts), Tradeify (5), Lucid (10), MFF (5) (5).\n\nImportant rules: Most firms prohibit fully automated "set and forget" bots on funded accounts. Apex specifically allows semi-automated execution tools but bans fully automated trading. You need to manually initiate or confirm trades.\n\nTrade copiers like CrossTrade allow you to place a trade on one platform and have it automatically replicate across multiple accounts. This is the standard approach for account stacking.\n\nCosts add up: 10 Apex accounts at $35 each = $350 for evaluations, plus 10 × $160 activation = $1,600 total. But if each account generates $5,000/month in profits, the ROI is extraordinary.` },
   { id:"sim-vs-live", slug:"sim-funded-vs-live-funded", title:"Sim Funded vs Live Funded: What's the Difference?", category:"Education", readTime:"5 min", date:"Mar 2026", excerpt:"Most prop firm 'funded' accounts are actually simulated. Here's the truth about where your trades actually go.", content:`Here's something most prop firm marketers don't tell you: the majority of "funded" accounts are still simulated. Your trades aren't hitting the real market.\n\nSim-funded accounts execute trades in a simulated environment that mirrors real market conditions. The firm pays you from their revenue (primarily from evaluation fees paid by other traders). Your P&L is real money, but your trades aren't.\n\nLive-funded accounts execute real trades on real exchanges through a broker. Your orders actually move the market (slightly). Only a few firms offer this: Take Profit Trader.\n\nDoes it matter? For most traders, no. Your P&L is the same whether your trades are simulated or live. The execution quality is generally identical for retail-sized orders.\n\nWhere it matters: if a sim-funded firm goes bankrupt, your account and pending payouts could be at risk. Live-funded accounts through regulated brokers offer more protection. \n\nThe industry is slowly moving toward more live capital access. Take Profit Trader routes to live accounts as you scale. Expect more firms to follow this trend.` },
   { id:"choosing-account-size", slug:"how-to-choose-account-size", title:"50K vs 100K vs 150K: Which Account Size Should You Choose?", category:"Guide", readTime:"5 min", date:"Mar 2026", excerpt:"Bigger isn't always better. Here's how to choose the right account size based on your experience, strategy, and risk tolerance.", content:`Account size affects your profit target, drawdown cushion, contract limits, and evaluation cost. Choosing wrong can set you up for failure.\n\nThe 50K account is the sweet spot for most traders. The profit target ($3,000) is achievable without excessive risk, the drawdown ($2,000) gives enough room to survive normal market volatility, and the evaluation cost is the lowest.\n\n100K accounts double everything: $6,000 profit target, $3,000-$4,000 drawdown, and typically 2x the evaluation cost. Choose this if you're comfortable trading 2-4 contracts and your strategy naturally produces larger daily P&L swings.\n\n150K accounts are for experienced traders only. $9,000 profit targets require sustained profitability over multiple sessions. The higher drawdown gives more room, but the profit target is proportionally harder to reach.\n\nOur recommendation for different experience levels: Beginners → 50K (lower cost, achievable targets). Intermediate → 50K or 100K (depends on strategy). Advanced → 100K or 150K, or multiple 50K accounts (account stacking).\n\nPro tip: it's often better to pass multiple 50K evaluations than one 150K. The profit targets are easier, the cost per attempt is lower, and you can stack accounts for more total capital.` },
   { id:"prop-vs-personal", slug:"prop-firm-vs-personal-account", title:"Prop Firm vs Personal Account: Which Is Right for You?", category:"Education", readTime:"6 min", date:"Mar 2026", excerpt:"Should you trade with a prop firm or fund your own account? The math might surprise you.", content:`The fundamental question: should you pay for a prop firm evaluation or just fund your own account? Let's do the math.\n\nTo replicate a 50K prop firm account with your own capital, you'd need $50,000. That's real money at risk. A prop firm evaluation costs $50-$170. Even if you fail 10 evaluations, you've spent $500-$1,700 — still 97% less than funding yourself.\n\nProp firm advantages: minimal capital at risk, professional-grade platforms and data, forced discipline through rules, ability to scale through multiple accounts, and no personal financial devastation if things go wrong.\n\nPersonal account advantages: you keep 100% of profits (no split), no rules restricting your strategy, no evaluation to pass, trade any instrument/timeframe, and no firm-specific restrictions.\n\nThe hybrid approach many successful traders use: trade prop firm accounts for income while building a personal account with saved profits. As your personal account grows, you gain freedom. As your prop accounts generate income, you have cash flow.\n\nBreak-even analysis: on a prop firm with 90/10 split, you keep 90%. To replicate 50K in buying power yourself, you'd need $50,000 earning 100% of profits. You'd need to make $5,556 in profits on your personal account to match $5,000 × 90% = $4,500 from the prop firm. But you'd need $50,000 at risk vs $100 for the evaluation.\n\nFor most traders, especially early in their career, prop firms offer dramatically better risk-adjusted returns.` },
@@ -321,6 +323,7 @@ export default function ShopProps() {
           {[["home","Home"],["firms","All Firms"],["compare","Compare"],["deals","Deals"],["blog","Blog"],["learn","Learn"]].map(([p,l]) => (
             <button key={p} className="navhov" style={{...S.navLink, color: page===p ? CYAN : MUTED}} onClick={() => nav(p)}>{l}</button>
           ))}
+          <button className="navhov" style={{...S.navLink, color: page==="giveaway" ? "#22c55e" : "#22c55e", fontWeight:600}} onClick={() => window.location.href="/giveaway"}>🎁 Giveaway</button>
           <button style={{...S.btn, padding:"8px 18px", fontSize:11}} onClick={() => nav("deals")}>CODE: {PROMO}</button>
         </div>
         <button className="mobonly" onClick={() => setMobileMenu(!mobileMenu)} style={{background:"none",border:"none",color:"#fff",fontSize:24,cursor:"pointer"}}>☰</button>
@@ -330,6 +333,7 @@ export default function ShopProps() {
           {[["home","Home"],["firms","All Firms"],["compare","Compare"],["deals","Deals"],["blog","Blog"],["learn","Learn"]].map(([p,l]) => (
             <button key={p} style={{...S.navLink,textAlign:"left",padding:"8px 0",fontSize:16,color:page===p?CYAN:MUTED}} onClick={() => nav(p)}>{l}</button>
           ))}
+          <button style={{...S.navLink,textAlign:"left",padding:"8px 0",fontSize:16,color:"#22c55e",fontWeight:600}} onClick={() => window.location.href="/giveaway"}>🎁 Giveaway</button>
         </div>
       )}
     </nav>
@@ -366,6 +370,22 @@ export default function ShopProps() {
               <div style={{...S.mono,fontSize:10,color:MUTED,letterSpacing:1,marginTop:4,textTransform:"uppercase"}}>{l}</div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Giveaway Banner */}
+      <section style={{...S.section,paddingBottom:40}}>
+        <div style={{...S.card,border:`1px solid #22c55e30`,background:`linear-gradient(135deg,#22c55e08,transparent)`,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:16,cursor:"pointer"}} onClick={() => window.location.href="/giveaway"}>
+          <div style={{display:"flex",alignItems:"center",gap:16}}>
+            <span style={{fontSize:40}}>🎁</span>
+            <div>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,color:"#fff",letterSpacing:1}}>ShopProps Giveaway — Win a Free Prop Firm Eval</div>
+              <div style={{fontSize:14,color:MUTED,marginTop:4}}>Enter your name for a chance to win. Takes 5 seconds.</div>
+            </div>
+          </div>
+          <button style={{...S.btn,background:"#22c55e",color:"#000",whiteSpace:"nowrap"}} onClick={(e) => { e.stopPropagation(); window.location.href="/giveaway"; }}>
+            Enter Giveaway →
+          </button>
         </div>
       </section>
 
@@ -750,89 +770,6 @@ export default function ShopProps() {
         </div>
 
         {/* Detailed Plans */}
-        {f.plans && f.plans.length > 0 && (
-          <div style={{marginBottom:40}}>
-            <h3 style={{...S.h2,fontSize:24}}>Account Plans & Pricing</h3>
-            {f.plans.map((plan, pi) => (
-              <div key={pi} style={{...S.card,marginBottom:20,border:`1px solid ${CYAN}15`}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
-                  <div>
-                    <h4 style={{fontSize:20,fontWeight:700,color:"#fff"}}>{plan.name}</h4>
-                    <span style={{fontSize:13,color:MUTED}}>{plan.type}</span>
-                  </div>
-                  <Badge color={CYAN}>{plan.type.includes("Instant") ? "Instant" : "Evaluation"}</Badge>
-                </div>
-                {plan.sizes.length > 0 && (
-                  <div style={{overflowX:"auto"}}>
-                    <table style={{width:"100%",borderCollapse:"collapse",minWidth:plan.sizes.length * 160}}>
-                      <thead>
-                        <tr style={{borderBottom:`1px solid ${BORDER}`}}>
-                          <th style={{fontSize:12,color:MUTED,padding:"10px 12px",textAlign:"left",fontWeight:600}}>SPEC</th>
-                          {plan.sizes.map(s => (
-                            <th key={s.size} style={{fontSize:14,color:CYAN,padding:"10px 12px",textAlign:"center",fontWeight:700}}>{s.size}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[["Price","price"],["Profit Target","target"],["Max Drawdown","drawdown"],["Daily Loss Limit","dll"],["Consistency","consistency"],["Max Contracts","contracts"],["Activation Fee","activation"]].map(([label,key],ri) => (
-                          <tr key={key} style={{borderBottom:`1px solid ${BORDER}10`,background:ri%2===0?"transparent":`${CARD}`}}>
-                            <td style={{fontSize:13,color:MUTED,padding:"10px 12px",fontWeight:500}}>{label}</td>
-                            {plan.sizes.map(s => {
-                              const val = s[key] || "—";
-                              const isGood = val === "$0" || val === "FREE" || val === "None" || val === "No";
-                              return <td key={s.size} style={{fontSize:14,color:isGood?"#22c55e":"#fff",padding:"10px 12px",textAlign:"center",fontWeight:500}}>{val}</td>;
-                            })}
-                          </tr>
-                        ))}
-                        {plan.sizes[0]?.note && (
-                          <tr style={{borderTop:`1px solid ${BORDER}`}}>
-                            <td colSpan={plan.sizes.length + 1} style={{fontSize:12,color:MUTED,padding:"10px 12px",fontStyle:"italic"}}>
-                              Note: {plan.sizes[0].note}
-                            </td>
-                          </tr>
-                        )}
-                        {plan.sizes[0]?.fundedDaily && (
-                          <>
-                            <tr style={{borderTop:`1px solid ${CYAN}20`}}>
-                              <td colSpan={plan.sizes.length + 1} style={{fontSize:13,color:CYAN,padding:"12px",fontWeight:600}}>Funded Path: Daily</td>
-                            </tr>
-                            <tr style={{background:`${CYAN}05`}}>
-                              <td style={{fontSize:13,color:MUTED,padding:"8px 12px"}}>Daily Loss Limit</td>
-                              {plan.sizes.map(s => <td key={s.size} style={{fontSize:14,color:"#fff",padding:"8px 12px",textAlign:"center"}}>{s.fundedDaily?.dll || "—"}</td>)}
-                            </tr>
-                            <tr style={{background:`${CYAN}05`}}>
-                              <td style={{fontSize:13,color:MUTED,padding:"8px 12px"}}>Max Payout</td>
-                              {plan.sizes.map(s => <td key={s.size} style={{fontSize:14,color:CYAN,padding:"8px 12px",textAlign:"center",fontWeight:600}}>{s.fundedDaily?.maxPayout || "—"}</td>)}
-                            </tr>
-                            <tr style={{borderTop:`1px solid ${CYAN}20`}}>
-                              <td colSpan={plan.sizes.length + 1} style={{fontSize:13,color:CYAN,padding:"12px",fontWeight:600}}>Funded Path: Flex</td>
-                            </tr>
-                            <tr style={{background:`${CYAN}05`}}>
-                              <td style={{fontSize:13,color:MUTED,padding:"8px 12px"}}>Daily Loss Limit</td>
-                              {plan.sizes.map(s => <td key={s.size} style={{fontSize:14,color:s.fundedFlex?.dll==="None"?"#22c55e":"#fff",padding:"8px 12px",textAlign:"center"}}>{s.fundedFlex?.dll || "—"}</td>)}
-                            </tr>
-                            <tr style={{background:`${CYAN}05`}}>
-                              <td style={{fontSize:13,color:MUTED,padding:"8px 12px"}}>Max Payout</td>
-                              {plan.sizes.map(s => <td key={s.size} style={{fontSize:14,color:CYAN,padding:"8px 12px",textAlign:"center",fontWeight:600}}>{s.fundedFlex?.maxPayout || "—"}</td>)}
-                            </tr>
-                          </>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                {/* CTA for this plan */}
-                <div style={{marginTop:16}}>
-                  <button style={{...S.btn,width:"100%",fontSize:14}} onClick={() => f.affiliate !== "#" ? window.open(f.affiliate,"_blank") : handleCopy(`plan-${f.id}-${pi}`)}>
-                    {f.affiliate !== "#" ? `Get ${plan.name} at ${f.name} →` : copied===`plan-${f.id}-${pi}` ? "✓ Copied!" : `Code: ${PROMO}`}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* DETAILED PLAN TABLES */}
         {f.plans && f.plans.length > 0 && (
           <div style={{marginBottom:32}}>
             <h3 style={{...S.h2,fontSize:24}}>Account Plans & Pricing</h3>
