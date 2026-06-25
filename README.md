@@ -46,3 +46,39 @@ To add more: Edit `app/page.js`, find the firm in the `FIRMS` array, and change 
 
 ## Promo Code
 Code **BRITT** is displayed on every page. To change it, edit the `PROMO` constant at the top of `app/page.js`.
+
+## 🎁 Viral Giveaway (`/giveaway`)
+A TC-Trades-style referral giveaway lives at `/giveaway`. Entrants get a unique
+referral link — each friend who joins earns them bonus entries, and social tasks
+award more. The winner is drawn at random, weighted by entry count.
+
+### Environment variables (set in Vercel → Settings → Environment Variables)
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `UPSTASH_REDIS_REST_URL` | yes | Upstash Redis REST URL (stores entries) |
+| `UPSTASH_REDIS_REST_TOKEN` | yes | Upstash Redis REST token |
+| `GIVEAWAY_ADMIN_SECRET` | yes (for admin) | Secret guarding the admin endpoint |
+| `NEXT_PUBLIC_SITE_URL` | recommended | Public base URL used in referral links (e.g. `https://shopprops.co`) |
+
+Without Redis configured the page still renders and shows a "coming soon" state —
+nothing breaks. Create a free database at [upstash.com](https://upstash.com) and
+paste the two REST values into Vercel.
+
+### Running / operating the giveaway (admin API)
+All admin calls are `POST /api/giveaway/admin` with header `x-admin-secret: <GIVEAWAY_ADMIN_SECRET>`.
+
+```bash
+# Open entries with a 14-day countdown
+curl -X POST https://shopprops.co/api/giveaway/admin \
+  -H 'x-admin-secret: YOUR_SECRET' -H 'Content-Type: application/json' \
+  -d '{"action":"start","endDate":"2026-07-15T23:59:59Z"}'
+
+curl ... -d '{"action":"stats"}'          # totals + top entrants
+curl ... -d '{"action":"draw","count":3}' # pick 3 winners, weighted by entries
+curl ... -d '{"action":"stop"}'           # close entries
+curl ... -d '{"action":"reset","confirm":"RESET"}'  # wipe all giveaway data
+```
+
+### Tuning the giveaway
+- **Prizes, bonus amounts, social tasks**: edit the `PRIZES`, `REFERRAL_BONUS`, and `TASKS` constants at the top of `app/api/giveaway/route.js`.
+- **Social task links / FAQ / copy**: edit `TASK_META` and `FAQS` in `app/giveaway/page.js`.

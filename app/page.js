@@ -379,8 +379,8 @@ export default function ShopProps() {
           <div style={{display:"flex",alignItems:"center",gap:16}}>
             <span style={{fontSize:40}}>🎁</span>
             <div>
-              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,color:"#fff",letterSpacing:1}}>ShopProps Giveaway — Win a Free Prop Firm Eval</div>
-              <div style={{fontSize:14,color:MUTED,marginTop:4}}>Enter your name for a chance to win. Takes 5 seconds.</div>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,color:"#fff",letterSpacing:1}}>ShopProps Giveaway — Win a Fully Funded Prop Account</div>
+              <div style={{fontSize:14,color:MUTED,marginTop:4}}>Enter free, share your link, stack bonus entries. Takes 10 seconds.</div>
             </div>
           </div>
           <button style={{...S.btn,background:"#22c55e",color:"#000",whiteSpace:"nowrap"}} onClick={(e) => { e.stopPropagation(); window.location.href="/giveaway"; }}>

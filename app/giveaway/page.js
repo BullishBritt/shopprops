@@ -1,190 +1,414 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
+// ═══════════════════════════════════════════════════════════════
+// SHOPPROPS GIVEAWAY — viral landing page
+// Theme matches the main site: dark + cyan, Bebas/Outfit/Space Mono.
+// ═══════════════════════════════════════════════════════════════
+
+const CYAN = '#00e5ff';
+const GREEN = '#22c55e';
+const DARK = '#070b11';
+const CARD = '#0c1119';
+const BORDER = '#151d2b';
+const MUTED = '#64748b';
+const TEXT = '#cbd5e1';
+
+const STORE_KEY = 'shopprops_giveaway_email';
+
+const TASK_META = [
+  { id: 'follow_x', icon: '𝕏', label: 'Follow @ShopProps on X', url: 'https://x.com' },
+  { id: 'follow_ig', icon: '📸', label: 'Follow on Instagram', url: 'https://instagram.com' },
+  { id: 'subscribe_yt', icon: '▶', label: 'Subscribe on YouTube', url: 'https://youtube.com' },
+  { id: 'join_discord', icon: '💬', label: 'Join the Discord', url: 'https://discord.com' },
+];
+
+const FAQS = [
+  { q: 'How do I enter?', a: 'Enter your name and email above — that\'s one entry. Then share your unique referral link and complete bonus tasks to rack up more entries. The more entries you have, the higher your odds.' },
+  { q: 'How are bonus entries earned?', a: 'Every friend who joins through your referral link gives you +3 entries. Following our socials and joining the Discord each give you bonus entries too. Your live entry total updates instantly.' },
+  { q: 'Is it really free?', a: 'Yes. There is no purchase necessary and entering is completely free. We run these giveaways to grow the ShopProps community.' },
+  { q: 'How is the winner chosen?', a: 'When the countdown hits zero, a winner is drawn at random — weighted by entry count. More entries means a better chance, but everyone with at least one entry can win.' },
+  { q: 'When and how will I be notified?', a: 'Winners are announced after the giveaway closes and contacted directly at the email used to enter. Make sure you use a real email you check.' },
+  { q: 'What can I win?', a: 'A fully funded prop firm account (or its cash equivalent), plus runner-up evaluations and trading credit. See the full prize lineup above.' },
+];
 
 export default function GiveawayPage() {
-  const [name, setName] = useState('');
-  const [status, setStatus] = useState(null); // null | 'success' | 'error'
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [giveawayInfo, setGiveawayInfo] = useState(null);
+  const [info, setInfo] = useState(null);
+  const [user, setUser] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [agree, setAgree] = useState(false);
+  const [ref, setRef] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [openFaq, setOpenFaq] = useState(null);
+  const [pendingTask, setPendingTask] = useState(null);
+  const [toast, setToast] = useState('');
 
-  useEffect(() => {
-    fetch('/api/giveaway')
-      .then(r => r.json())
-      .then(data => setGiveawayInfo(data));
+  // ── load status + capture ?ref + restore saved entrant ──
+  const fetchStatus = useCallback(async (em) => {
+    try {
+      const qs = em ? `?email=${encodeURIComponent(em)}` : '';
+      const res = await fetch('/api/giveaway' + qs);
+      const data = await res.json();
+      setInfo(data);
+      if (data.user) setUser(data.user);
+      return data;
+    } catch {
+      setInfo({ isActive: false, prizes: [], feed: [], totalEntries: 0, totalEntrants: 0 });
+    }
   }, []);
 
   useEffect(() => {
-    if (!giveawayInfo?.endDate) return;
-    const interval = setInterval(() => {
-      const diff = new Date(giveawayInfo.endDate) - new Date();
-      if (diff <= 0) {
-        setTimeLeft(null);
-        clearInterval(interval);
-        return;
-      }
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((diff / (1000 * 60)) % 60);
-      const seconds = Math.floor((diff / 1000) % 60);
-      setTimeLeft({ days, hours, minutes, seconds });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [giveawayInfo]);
+    let savedEmail = '';
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const r = params.get('ref');
+      if (r) setRef(r.toUpperCase().slice(0, 8));
+      savedEmail = localStorage.getItem(STORE_KEY) || '';
+    } catch {}
+    fetchStatus(savedEmail);
+  }, [fetchStatus]);
 
-  const handleSubmit = async () => {
-    if (!name.trim()) return;
+  // ── countdown ──
+  useEffect(() => {
+    if (!info?.endDate) { setTimeLeft(null); return; }
+    const tick = () => {
+      const diff = new Date(info.endDate) - new Date();
+      if (diff <= 0) { setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, ended: true }); return; }
+      setTimeLeft({
+        days: Math.floor(diff / 864e5),
+        hours: Math.floor((diff / 36e5) % 24),
+        minutes: Math.floor((diff / 6e4) % 60),
+        seconds: Math.floor((diff / 1e3) % 60),
+      });
+    };
+    tick();
+    const i = setInterval(tick, 1000);
+    return () => clearInterval(i);
+  }, [info]);
+
+  const isActive = info?.isActive;
+
+  const handleJoin = async () => {
+    setError('');
+    if (name.trim().length < 2) return setError('Please enter your name.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setError('Please enter a valid email.');
+    if (!agree) return setError('Please agree to the giveaway rules.');
     setLoading(true);
     try {
       const res = await fetch('/api/giveaway', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ action: 'join', name: name.trim(), email: email.trim(), ref }),
       });
       const data = await res.json();
       if (data.success) {
-        setStatus('success');
-        setMessage(`You're entered, ${name}! Good luck 🎉`);
+        setUser(data.user);
+        try { localStorage.setItem(STORE_KEY, email.trim().toLowerCase()); } catch {}
+        fetchStatus(email.trim().toLowerCase());
+        setToast(data.alreadyEntered ? 'Welcome back — here\'s your dashboard.' : 'You\'re in! Share your link for more entries 🎉');
+        setTimeout(() => setToast(''), 4000);
       } else {
-        setStatus('error');
-        setMessage(data.error || 'Something went wrong.');
+        setError(data.error || 'Something went wrong.');
       }
     } catch {
-      setStatus('error');
-      setMessage('Something went wrong. Try again.');
+      setError('Something went wrong. Try again.');
     }
     setLoading(false);
   };
 
-  const isActive = giveawayInfo?.isActive;
+  const copyLink = () => {
+    if (!user?.referralUrl) return;
+    navigator.clipboard?.writeText(user.referralUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const doTask = async (task) => {
+    if (!user || user.tasks?.includes(task.id)) return;
+    // Open the social link, then mark the task complete.
+    try { window.open(task.url, '_blank', 'noopener'); } catch {}
+    setPendingTask(task.id);
+    try {
+      const res = await fetch('/api/giveaway', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'task', email: email.trim().toLowerCase() || user.email, task: task.id }),
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        setUser(data.user);
+        if (data.awarded) { setToast(`+${data.awarded} entries!`); setTimeout(() => setToast(''), 3000); }
+      }
+    } catch {}
+    setPendingTask(null);
+  };
+
+  const shareUrl = user?.referralUrl || '';
+  const shareText = encodeURIComponent('I just entered the ShopProps giveaway to win a funded prop account 🚀 Enter free:');
+  const shareLinks = [
+    { label: 'X', color: '#1d9bf0', href: `https://twitter.com/intent/tweet?text=${shareText}&url=${encodeURIComponent(shareUrl)}` },
+    { label: 'Facebook', color: '#1877f2', href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}` },
+    { label: 'WhatsApp', color: '#25d366', href: `https://wa.me/?text=${shareText}%20${encodeURIComponent(shareUrl)}` },
+    { label: 'Telegram', color: '#0088cc', href: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${shareText}` },
+  ];
+
+  // ── styles ──
+  const S = {
+    btn: { padding: '14px 28px', background: CYAN, color: DARK, fontFamily: "'Space Mono',monospace", fontWeight: 700, fontSize: 14, letterSpacing: 1, border: 'none', cursor: 'pointer', borderRadius: 6, transition: 'all .2s' },
+    input: { width: '100%', padding: '15px 16px', background: '#0a0f17', border: `1px solid ${BORDER}`, borderRadius: 8, color: '#fff', fontSize: 15, boxSizing: 'border-box', outline: 'none', fontFamily: "'Outfit',sans-serif" },
+    card: { background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16 },
+    label: { fontFamily: "'Space Mono',monospace", fontSize: 10, color: MUTED, letterSpacing: 1.5, textTransform: 'uppercase' },
+  };
+
+  const prizes = info?.prizes || [];
+  const feed = info?.feed || [];
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#0a0a0a',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '40px 20px',
-      fontFamily: 'sans-serif',
-    }}>
-      {/* Logo */}
-      <a href="/" style={{ marginBottom: '40px' }}>
-        <img src="/shopprops-logo.png" alt="ShopProps" style={{ height: '40px' }} />
-      </a>
+    <div style={{ minHeight: '100vh', background: DARK, color: TEXT, fontFamily: "'Outfit',sans-serif", overflowX: 'hidden' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap');
+        * { margin:0; padding:0; box-sizing:border-box; }
+        a { color: inherit; }
+        ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-thumb { background:${BORDER}; border-radius:3px; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes glow { 0%,100%{box-shadow:0 0 40px rgba(0,229,255,.10)} 50%{box-shadow:0 0 70px rgba(0,229,255,.22)} }
+        @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+        @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+        .fade { animation: fadeUp .6s ease-out both; }
+        .glow { animation: glow 3.5s ease-in-out infinite; }
+        .gv-input:focus { border-color:${CYAN} !important; }
+        .gv-btn:hover { filter:brightness(1.08); transform:translateY(-1px); }
+        .gv-prize:hover { transform:translateY(-4px); border-color:${CYAN}40 !important; }
+        .gv-task:hover { border-color:${CYAN}50 !important; }
+        .gv-share:hover { filter:brightness(1.12); transform:translateY(-1px); }
+        .grad-text { background:linear-gradient(90deg,#fff,${CYAN},#fff); background-size:200% auto; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; animation:shimmer 4s linear infinite; }
+        .marquee-track { display:flex; gap:40px; white-space:nowrap; animation:marquee 28s linear infinite; }
+        @media(max-width:640px){ .hero-h1{ font-size:2.6rem !important; } }
+      `}</style>
 
-      <div style={{
-        background: '#111',
-        border: '1px solid #222',
-        borderRadius: '16px',
-        padding: '48px 40px',
-        maxWidth: '480px',
-        width: '100%',
-        textAlign: 'center',
-      }}>
-        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎁</div>
-        <h1 style={{ color: '#fff', fontSize: '28px', fontWeight: '700', marginBottom: '8px' }}>
-          ShopProps Giveaway
+      {/* toast */}
+      {toast && (
+        <div style={{ position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 200, background: GREEN, color: '#000', padding: '12px 22px', borderRadius: 30, fontWeight: 700, fontSize: 14, boxShadow: '0 10px 40px rgba(34,197,94,.4)' }}>
+          {toast}
+        </div>
+      )}
+
+      {/* top bar */}
+      <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '0 24px', position: 'sticky', top: 0, background: DARK + 'f0', backdropFilter: 'blur(20px)', zIndex: 100 }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+            <img src="/shop_props_logo.png" alt="ShopProps" style={{ height: 34, width: 'auto' }} />
+            <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 20, color: '#fff', letterSpacing: 1 }}><span style={{ color: CYAN }}>SHOP</span>PROPS</span>
+          </a>
+          <a href="/" style={{ ...S.label, textDecoration: 'none', color: MUTED }}>← Back to site</a>
+        </div>
+      </div>
+
+      {/* ── HERO ── */}
+      <section style={{ maxWidth: 980, margin: '0 auto', padding: '70px 24px 40px', textAlign: 'center' }} className="fade">
+        <div style={{ display: 'inline-block', padding: '6px 16px', borderRadius: 30, border: `1px solid ${GREEN}40`, background: `${GREEN}12`, color: GREEN, fontFamily: "'Space Mono',monospace", fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 28 }}>
+          🎁 The ShopProps Funded Account Giveaway
+        </div>
+        <h1 className="hero-h1" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(3rem,9vw,6rem)', lineHeight: 0.92, letterSpacing: 1, color: '#fff', marginBottom: 22 }}>
+          Win A <span className="grad-text">Fully Funded</span><br />Prop Firm Account
         </h1>
-        <p style={{ color: '#888', fontSize: '15px', marginBottom: '32px' }}>
-          Win a free prop firm evaluation. Enter your name below.
+        <p style={{ fontSize: 18, color: MUTED, maxWidth: 600, margin: '0 auto 36px', lineHeight: 1.6 }}>
+          Enter free in seconds. Share your link and complete bonus tasks to multiply your entries.
+          One winner takes a fully funded account — or the cash.
         </p>
 
-        {/* Countdown */}
-        {timeLeft && (
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginBottom: '32px' }}>
-            {[['days', timeLeft.days], ['hrs', timeLeft.hours], ['min', timeLeft.minutes], ['sec', timeLeft.seconds]].map(([label, val]) => (
-              <div key={label} style={{ textAlign: 'center' }}>
-                <div style={{ color: '#00e5ff', fontSize: '28px', fontWeight: '700' }}>
-                  {String(val).padStart(2, '0')}
-                </div>
-                <div style={{ color: '#555', fontSize: '11px', textTransform: 'uppercase' }}>{label}</div>
+        {/* countdown */}
+        {timeLeft && !timeLeft.ended && (
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginBottom: 18, flexWrap: 'wrap' }}>
+            {[['Days', timeLeft.days], ['Hours', timeLeft.hours], ['Mins', timeLeft.minutes], ['Secs', timeLeft.seconds]].map(([l, v]) => (
+              <div key={l} style={{ ...S.card, minWidth: 78, padding: '14px 10px' }}>
+                <div style={{ fontFamily: "'Space Mono',monospace", fontSize: 34, fontWeight: 700, color: CYAN, lineHeight: 1 }}>{String(v).padStart(2, '0')}</div>
+                <div style={{ ...S.label, marginTop: 6 }}>{l}</div>
               </div>
             ))}
           </div>
         )}
-
-        {/* Total entries */}
-        {giveawayInfo?.totalEntries > 0 && (
-          <p style={{ color: '#555', fontSize: '13px', marginBottom: '24px' }}>
-            {giveawayInfo.totalEntries} {giveawayInfo.totalEntries === 1 ? 'person has' : 'people have'} entered
-          </p>
+        {timeLeft?.ended && (
+          <div style={{ ...S.card, display: 'inline-block', padding: '14px 24px', color: '#f59e0b', borderColor: '#f59e0b40', marginBottom: 18 }}>
+            ⏰ This giveaway has closed — winner being drawn!
+          </div>
         )}
 
-        {!isActive ? (
-          <div style={{
-            background: '#1a1a1a',
-            border: '1px solid #333',
-            borderRadius: '10px',
-            padding: '24px',
-            color: '#666',
-            fontSize: '15px',
-          }}>
-            Giveaway coming soon. Check back soon! 👀
+        {/* live counters */}
+        <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap', marginTop: 10 }}>
+          <div>
+            <div style={{ fontFamily: "'Space Mono',monospace", fontSize: 26, fontWeight: 700, color: '#fff' }}>{(info?.totalEntrants ?? 0).toLocaleString()}</div>
+            <div style={S.label}>People Entered</div>
           </div>
-        ) : status === 'success' ? (
-          <div style={{
-            background: '#0d2b1a',
-            border: '1px solid #1a5c35',
-            borderRadius: '10px',
-            padding: '24px',
-            color: '#4ade80',
-            fontSize: '16px',
-            fontWeight: '600',
-          }}>
-            {message}
+          <div>
+            <div style={{ fontFamily: "'Space Mono',monospace", fontSize: 26, fontWeight: 700, color: CYAN }}>{(info?.totalEntries ?? 0).toLocaleString()}</div>
+            <div style={S.label}>Total Entries</div>
+          </div>
+        </div>
+
+        {!isActive && info && (
+          <div style={{ ...S.card, maxWidth: 460, margin: '36px auto 0', padding: 24, color: MUTED }}>
+            {info.configured === false
+              ? 'The giveaway will open soon — check back shortly! 👀'
+              : 'Entries are currently closed. Follow our socials so you don\'t miss the next drop. 👀'}
+          </div>
+        )}
+      </section>
+
+      {/* recent-entrants marquee */}
+      {feed.length > 3 && (
+        <div style={{ borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, padding: '12px 0', overflow: 'hidden', maskImage: 'linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)' }}>
+          <div className="marquee-track">
+            {[...feed, ...feed].map((n, i) => (
+              <span key={i} style={{ ...S.label, color: MUTED, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN, display: 'inline-block' }} /> {n} just entered
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── PRIZES ── */}
+      {prizes.length > 0 && (
+        <section style={{ maxWidth: 1000, margin: '0 auto', padding: '64px 24px 24px' }}>
+          <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(2rem,5vw,3rem)', color: '#fff', textAlign: 'center', letterSpacing: 1, marginBottom: 8 }}>The Prize Pool</h2>
+          <p style={{ textAlign: 'center', color: MUTED, marginBottom: 36 }}>Three winners. Real funded capital.</p>
+          <div style={{ display: 'grid', gap: 18, gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))' }}>
+            {prizes.map((p, i) => (
+              <div key={p.place} className="gv-prize" style={{ ...S.card, padding: 28, textAlign: 'center', transition: 'all .3s', borderColor: i === 0 ? `${CYAN}40` : BORDER, ...(i === 0 ? { animation: 'glow 3.5s ease-in-out infinite' } : {}) }}>
+                <div style={{ fontSize: 44, marginBottom: 10 }}>{p.emoji}</div>
+                <div style={{ ...S.label, color: i === 0 ? CYAN : MUTED, marginBottom: 8 }}>{p.place} Place</div>
+                <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 30, color: '#fff', letterSpacing: 0.5, lineHeight: 1 }}>{p.title}</div>
+                <div style={{ fontFamily: "'Space Mono',monospace", fontSize: 22, color: i === 0 ? CYAN : '#fff', margin: '10px 0' }}>{p.value}</div>
+                <p style={{ color: MUTED, fontSize: 14, lineHeight: 1.5 }}>{p.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── ENTRY / DASHBOARD ── */}
+      <section id="enter" style={{ maxWidth: 560, margin: '0 auto', padding: '48px 24px 24px', scrollMarginTop: 80 }}>
+        {!user ? (
+          <div style={{ ...S.card, padding: 36 }} className="glow">
+            <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 32, color: '#fff', letterSpacing: 1, textAlign: 'center', marginBottom: 6 }}>Enter The Giveaway</h2>
+            <p style={{ textAlign: 'center', color: MUTED, fontSize: 14, marginBottom: 24 }}>Free to enter. Takes 10 seconds.</p>
+            {ref && (
+              <div style={{ background: `${GREEN}12`, border: `1px solid ${GREEN}30`, borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: GREEN, textAlign: 'center' }}>
+                🤝 You were invited by a friend — they'll earn bonus entries when you join.
+              </div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <input className="gv-input" style={S.input} placeholder="Your name" value={name} onChange={e => setName(e.target.value)} disabled={!isActive} />
+              <input className="gv-input" style={S.input} type="email" placeholder="Your email" value={email} onChange={e => setEmail(e.target.value)} disabled={!isActive} onKeyDown={e => e.key === 'Enter' && handleJoin()} />
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: MUTED, fontSize: 13, cursor: 'pointer', margin: '4px 0' }}>
+                <input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} style={{ accentColor: CYAN, marginTop: 2 }} />
+                <span>I'm 18+ and agree to the giveaway rules. No purchase necessary.</span>
+              </label>
+              {error && <p style={{ color: '#f87171', fontSize: 13 }}>{error}</p>}
+              <button className="gv-btn" style={{ ...S.btn, width: '100%', opacity: isActive ? 1 : 0.5, cursor: isActive ? 'pointer' : 'not-allowed' }} onClick={handleJoin} disabled={loading || !isActive}>
+                {loading ? 'Entering…' : isActive ? 'Enter Giveaway →' : 'Entries Closed'}
+              </button>
+            </div>
           </div>
         ) : (
-          <>
-            <input
-              type="text"
-              placeholder="Your name"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-              style={{
-                width: '100%',
-                padding: '14px 16px',
-                background: '#1a1a1a',
-                border: '1px solid #333',
-                borderRadius: '8px',
-                color: '#fff',
-                fontSize: '15px',
-                marginBottom: '12px',
-                boxSizing: 'border-box',
-                outline: 'none',
-              }}
-            />
-            {status === 'error' && (
-              <p style={{ color: '#f87171', fontSize: '13px', marginBottom: '12px' }}>{message}</p>
-            )}
-            <button
-              onClick={handleSubmit}
-              disabled={loading || !name.trim()}
-              style={{
-                width: '100%',
-                padding: '14px',
-                background: loading || !name.trim() ? '#333' : '#00e5ff',
-                color: loading || !name.trim() ? '#666' : '#000',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '15px',
-                fontWeight: '700',
-                cursor: loading || !name.trim() ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s',
-              }}
-            >
-              {loading ? 'Entering...' : 'Enter Giveaway →'}
-            </button>
-          </>
-        )}
-      </div>
+          <div style={{ ...S.card, padding: 36 }} className="fade">
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <div style={{ ...S.label, color: GREEN }}>✓ You're entered, {user.firstName}</div>
+              <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 64, color: CYAN, lineHeight: 1, margin: '8px 0' }}>{user.entries}</div>
+              <div style={S.label}>{user.entries === 1 ? 'Entry' : 'Entries'} {user.rank ? `· Rank #${user.rank}` : ''}</div>
+            </div>
 
-      <p style={{ color: '#333', fontSize: '12px', marginTop: '24px' }}>
-        © ShopProps. Winner selected randomly after giveaway ends.
-      </p>
+            {/* referral link */}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ ...S.label, marginBottom: 8 }}>Your referral link — +{info?.referralBonus || 3} entries per friend</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input readOnly value={user.referralUrl} style={{ ...S.input, fontSize: 13, fontFamily: "'Space Mono',monospace" }} onFocus={e => e.target.select()} />
+                <button className="gv-btn" style={{ ...S.btn, padding: '0 18px', whiteSpace: 'nowrap', background: copied ? GREEN : CYAN }} onClick={copyLink}>{copied ? '✓ Copied' : 'Copy'}</button>
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                {shareLinks.map(s => (
+                  <a key={s.label} className="gv-share" href={s.href} target="_blank" rel="noopener noreferrer" style={{ flex: '1 1 auto', textAlign: 'center', padding: '10px 8px', borderRadius: 8, background: s.color, color: '#fff', fontWeight: 700, fontSize: 13, textDecoration: 'none', transition: 'all .2s' }}>
+                    {s.label}
+                  </a>
+                ))}
+              </div>
+              {user.referrals > 0 && (
+                <p style={{ ...S.label, color: GREEN, marginTop: 10, textAlign: 'center' }}>🔥 {user.referrals} friend{user.referrals > 1 ? 's' : ''} joined through your link</p>
+              )}
+            </div>
+
+            {/* bonus tasks */}
+            <div>
+              <div style={{ ...S.label, marginBottom: 8 }}>Bonus entries</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {TASK_META.map(t => {
+                  const done = user.tasks?.includes(t.id);
+                  const pts = info?.tasks?.[t.id]?.points || 2;
+                  return (
+                    <button key={t.id} className="gv-task" onClick={() => doTask(t)} disabled={done || pendingTask === t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 10, border: `1px solid ${done ? GREEN + '40' : BORDER}`, background: done ? GREEN + '10' : '#0a0f17', color: TEXT, cursor: done ? 'default' : 'pointer', transition: 'all .2s', textAlign: 'left' }}>
+                      <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>{t.icon}</span>
+                      <span style={{ flex: 1, fontSize: 14 }}>{t.label}</span>
+                      <span style={{ ...S.label, color: done ? GREEN : CYAN }}>{done ? '✓ Done' : pendingTask === t.id ? '…' : `+${pts}`}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ── HOW IT WORKS ── */}
+      <section style={{ maxWidth: 1000, margin: '0 auto', padding: '48px 24px' }}>
+        <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(2rem,5vw,3rem)', color: '#fff', textAlign: 'center', letterSpacing: 1, marginBottom: 36 }}>How It Works</h2>
+        <div style={{ display: 'grid', gap: 18, gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))' }}>
+          {[
+            { n: '01', t: 'Enter free', d: 'Drop your name and email. That\'s your first entry — no payment, ever.' },
+            { n: '02', t: 'Share your link', d: 'Every friend who joins through your unique link earns you +3 bonus entries.' },
+            { n: '03', t: 'Stack & win', d: 'Complete bonus tasks for even more entries. More entries, better odds.' },
+          ].map(s => (
+            <div key={s.n} style={{ ...S.card, padding: 28 }}>
+              <div style={{ fontFamily: "'Space Mono',monospace", fontSize: 14, color: CYAN, marginBottom: 12 }}>{s.n}</div>
+              <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 24, color: '#fff', letterSpacing: 0.5, marginBottom: 8 }}>{s.t}</div>
+              <p style={{ color: MUTED, fontSize: 14, lineHeight: 1.55 }}>{s.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── FAQ ── */}
+      <section style={{ maxWidth: 720, margin: '0 auto', padding: '24px 24px 64px' }}>
+        <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(2rem,5vw,3rem)', color: '#fff', textAlign: 'center', letterSpacing: 1, marginBottom: 28 }}>FAQ</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {FAQS.map((f, i) => (
+            <div key={i} style={{ ...S.card, overflow: 'hidden' }}>
+              <button onClick={() => setOpenFaq(openFaq === i ? null : i)} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '18px 20px', background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: 16, fontWeight: 600, fontFamily: "'Outfit',sans-serif", textAlign: 'left' }}>
+                {f.q}
+                <span style={{ color: CYAN, fontSize: 22, flexShrink: 0, transform: openFaq === i ? 'rotate(45deg)' : 'none', transition: 'transform .2s' }}>+</span>
+              </button>
+              {openFaq === i && <p style={{ padding: '0 20px 18px', color: MUTED, fontSize: 14, lineHeight: 1.6 }}>{f.a}</p>}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer style={{ borderTop: `1px solid ${BORDER}`, padding: '36px 24px', textAlign: 'center', background: CARD }}>
+        <a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', marginBottom: 14 }}>
+          <img src="/shop_props_logo.png" alt="ShopProps" style={{ height: 28 }} />
+          <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 18, color: '#fff', letterSpacing: 1 }}><span style={{ color: CYAN }}>SHOP</span>PROPS</span>
+        </a>
+        <p style={{ color: MUTED, fontSize: 12, maxWidth: 560, margin: '0 auto', lineHeight: 1.6 }}>
+          No purchase necessary. Must be 18+ to enter. Winner selected at random (weighted by entries) after the giveaway ends and notified by email.
+          ShopProps giveaways are not sponsored, endorsed, or administered by any social platform.
+        </p>
+        <p style={{ color: '#334155', fontSize: 12, marginTop: 14 }}>© {new Date().getFullYear()} ShopProps. All rights reserved.</p>
+      </footer>
     </div>
   );
 }
