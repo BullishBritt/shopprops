@@ -95,7 +95,7 @@ export async function POST(request) {
       if (!p) return Response.json({ error: 'Proof not found.' }, { status: 404 });
       if (p.status === 'approved') return Response.json({ success: true, alreadyApproved: true });
       const bonus = Math.max(1, Math.min(500, Number(body.bonus || PROOF_BONUS)));
-      const newEntries = await awardEntries(r, p.email, p.name, p.amount, 'proof');
+      const newEntries = await awardEntries(r, p.email, p.name, bonus);
       await r.hset(`proof:${p.id}`, { status: 'approved', entriesAwarded: bonus, reviewedAt: Date.now() });
       await r.zrem('proof:pending', p.id);
       return Response.json({ success: true, awarded: bonus, email: p.email, entries: newEntries });

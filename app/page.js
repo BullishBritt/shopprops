@@ -280,6 +280,44 @@ export default function ShopProps() {
   const [firmDetail, setFirmDetail] = useState(null);
   const [searchQ, setSearchQ] = useState("");
 
+  // ── Deep-linking: open the right view from ?view= / ?firm= / ?post= ──
+  // (these are the URLs listed in sitemap.js so shared/indexed links land correctly)
+  useEffect(() => {
+    try {
+      const q = new URLSearchParams(window.location.search);
+      const firm = q.get("firm");
+      const post = q.get("post");
+      const view = q.get("view") || (window.location.hash || "").replace("#", "");
+      if (firm && FIRMS.some(f => f.id === firm)) { setFirmDetail(firm); setPage("firm-detail"); return; }
+      if (post) { const bp = BLOG_POSTS.find(p => p.slug === post || p.id === post); if (bp) { setBlogPost(bp.id); setPage("blog-post"); return; } }
+      if (view && ["firms","compare","deals","blog","learn"].includes(view)) setPage(view);
+    } catch {}
+  }, []);
+
+  // ── Keep <title> + canonical in sync with the active view (SEO) ──
+  useEffect(() => {
+    const base = "https://shopprops.co";
+    let title = "ShopProps.co | Futures Prop Firm Comparison & Reviews";
+    let path = "/";
+    if (page === "firm-detail" && firmDetail) {
+      const f = FIRMS.find(x => x.id === firmDetail);
+      if (f) { title = `${f.name} Review — Rules, Pricing & Payouts | ShopProps`; path = `/?firm=${f.id}`; }
+    } else if (page === "blog-post" && blogPost) {
+      const p = BLOG_POSTS.find(x => x.id === blogPost);
+      if (p) { title = `${p.title} | ShopProps`; path = `/?post=${p.slug}`; }
+    } else if (page === "firms") { title = "All Futures Prop Firms — Compared | ShopProps"; path = "/?view=firms"; }
+    else if (page === "compare") { title = "Compare Prop Firms Side-by-Side | ShopProps"; path = "/?view=compare"; }
+    else if (page === "deals") { title = `Prop Firm Deals & Promo Codes (${PROMO}) | ShopProps`; path = "/?view=deals"; }
+    else if (page === "blog") { title = "Prop Firm Blog & Guides | ShopProps"; path = "/?view=blog"; }
+    else if (page === "learn") { title = "Learn Prop Trading | ShopProps"; path = "/?view=learn"; }
+    try {
+      document.title = title;
+      let link = document.querySelector('link[rel="canonical"]');
+      if (!link) { link = document.createElement("link"); link.rel = "canonical"; document.head.appendChild(link); }
+      link.href = base + path;
+    } catch {}
+  }, [page, firmDetail, blogPost]);
+
   const handleCopy = (id) => { navigator.clipboard?.writeText(PROMO); setCopied(id); setTimeout(() => setCopied(null), 2000); };
 
   const toggleCompare = (id) => {
@@ -1077,10 +1115,51 @@ export default function ShopProps() {
     </footer>
   );
 
+  // ── Breadcrumbs (visible + JSON-LD) ──
+  const renderBreadcrumb = () => {
+    if (page === "home") return null;
+    const base = "https://shopprops.co";
+    const trail = [{ label: "Home", page: "home", url: base }];
+    const labels = { firms: "All Firms", compare: "Compare", deals: "Deals", blog: "Blog", learn: "Learn" };
+    if (page === "firm-detail" && firmDetail) {
+      const f = FIRMS.find(x => x.id === firmDetail);
+      trail.push({ label: "All Firms", page: "firms", url: `${base}/?view=firms` });
+      if (f) trail.push({ label: f.name, page: null, url: `${base}/?firm=${f.id}` });
+    } else if (page === "blog-post" && blogPost) {
+      const p = BLOG_POSTS.find(x => x.id === blogPost);
+      trail.push({ label: "Blog", page: "blog", url: `${base}/?view=blog` });
+      if (p) trail.push({ label: p.title, page: null, url: `${base}/?post=${p.slug}` });
+    } else if (labels[page]) {
+      trail.push({ label: labels[page], page: null, url: `${base}/?view=${page}` });
+    }
+    const ld = {
+      "@context": "https://schema.org", "@type": "BreadcrumbList",
+      itemListElement: trail.map((t, i) => ({ "@type": "ListItem", position: i + 1, name: t.label, item: t.url })),
+    };
+    return (
+      <div style={{ ...S.section, padding: "14px 24px 0" }}>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
+        <div style={{ ...S.mono, fontSize: 11, color: MUTED, letterSpacing: 0.5, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+          {trail.map((t, i) => (
+            <span key={i} style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              {i > 0 && <span style={{ color: BORDER }}>/</span>}
+              {t.page ? (
+                <button onClick={() => nav(t.page)} style={{ background: "none", border: "none", color: MUTED, cursor: "pointer", fontFamily: "inherit", fontSize: 11, padding: 0 }} className="navhov">{t.label}</button>
+              ) : (
+                <span style={{ color: CYAN, maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.label}</span>
+              )}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div style={S.wrap}>
       {renderNav()}
       {renderPromoBar()}
+      {renderBreadcrumb()}
       {page === "home" && renderHome()}
       {page === "firms" && renderFirms()}
       {page === "compare" && renderCompare()}

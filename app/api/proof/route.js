@@ -1,5 +1,5 @@
 import { put } from '@vercel/blob';
-import { getRedis, EMAIL_RE, baseUrlFrom } from '../_lib/store';
+import { getRedis, EMAIL_RE } from '../_lib/store';
 
 // ═══════════════════════════════════════════════════════════════
 // PROOF-OF-CODE UPLOAD — "I used code BRITT" receipt submissions

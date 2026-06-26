@@ -116,6 +116,32 @@ export default function RootLayout({ children }) {
             }),
           }}
         />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ItemList",
+              name: "Futures Prop Firms Compared",
+              itemListElement: [
+                ["Tradeify", 4.8, "tradeify"], ["Lucid Trading", 4.7, "lucid"], ["Alpha Futures", 4.6, "alphaF"],
+                ["Topstep", 4.6, "topstep"], ["Apex Trader Funding", 4.5, "apex"], ["My Funded Futures", 4.5, "mff"],
+                ["Top One Futures", 4.4, "topone"], ["Take Profit Trader", 4.3, "takeprofittrader"],
+                ["FundedNext Futures", 4.3, "fundednext"], ["Earn2Trade", 4.2, "earn2trade"], ["Bulenox", 4.1, "bulenox"],
+              ].map(([name, rating, id], i) => ({
+                "@type": "ListItem",
+                position: i + 1,
+                item: {
+                  "@type": "Product",
+                  name,
+                  url: `https://shopprops.co/?firm=${id}`,
+                  category: "Futures Prop Firm",
+                  aggregateRating: { "@type": "AggregateRating", ratingValue: rating, bestRating: 5, ratingCount: 1 },
+                },
+              })),
+            }),
+          }}
+        />
       </head>
       <body>{children}</body>
     </html>

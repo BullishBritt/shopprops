@@ -3,6 +3,7 @@ export default function robots() {
     rules: {
       userAgent: '*',
       allow: '/',
+      disallow: ['/admin', '/api/'],
     },
     sitemap: 'https://shopprops.co/sitemap.xml',
   }

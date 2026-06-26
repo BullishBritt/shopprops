@@ -48,7 +48,8 @@ export async function loadUser(r, email) {
 
 // Award N bonus entries to an entrant, creating a minimal entrant record
 // if they haven't formally joined yet. Returns the new entry total.
-export async function awardEntries(r, email, name, amount, reason) {
+export async function awardEntries(r, email, name, entries) {
+  const amount = Math.max(0, Number(entries) || 0);
   const existing = await loadUser(r, email);
   if (existing) {
     const newEntries = existing.entries + amount;

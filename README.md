@@ -80,6 +80,17 @@ curl ... -d '{"action":"stop"}'           # close entries
 curl ... -d '{"action":"reset","confirm":"RESET"}'  # wipe all giveaway data
 ```
 
+### Admin dashboard (`/admin`)
+A no-code console lives at **`/admin`**. Sign in with your `GIVEAWAY_ADMIN_SECRET`
+(stored in your browser only, sent as the `x-admin-secret` header). From there you can:
+- **Overview** — live entrants, total entries, pending-proof count, leaderboard
+- **Proofs** — see every uploaded receipt with image preview, approve (grants bonus entries) or reject
+- **Winners** — draw weekly winner(s) weighted by entries, exclude past winners, view history
+- **Controls** — start/stop entries, set the end date, advance the weekly round, reset all data
+
+`/admin` is `noindex` and blocked in `robots.txt`. Everything it does is also available
+as raw API calls (below) if you'd rather script it.
+
 ### Proof-of-code receipts → bonus entries
 Traders who used your promo code can upload a receipt/screenshot at `/giveaway`
 (the "Used code BRITT?" card). Each submission lands in a review queue; approving
@@ -113,3 +124,17 @@ email they entered with → run `newRound`. Entries are cumulative across rounds
 - **Proof bonus amount**: `PROOF_BONUS` in `app/api/giveaway/admin/route.js` (and the display value `PROOF_BONUS` in `app/giveaway/page.js`).
 - **Social task links / FAQ / copy**: edit `TASK_META` and `FAQS` in `app/giveaway/page.js`.
 - **Prop firm data / logos**: the `FIRMS` array and `FirmLogo` SVGs at the top of `app/page.js`. Drop official brand PNGs into `/public` and reference them to replace the placeholder SVGs.
+
+## SEO / indexing
+- **Structured data (JSON-LD)** in `app/layout.js`: `WebSite`, `Organization`, `FAQPage`, and an `ItemList` of firms with ratings. `app/giveaway/layout.js` adds giveaway metadata + a `BreadcrumbList`.
+- **Breadcrumbs**: visible trail + `BreadcrumbList` JSON-LD on every sub-view (`renderBreadcrumb` in `app/page.js`).
+- **Deep links**: the SPA reads `?view=`, `?firm=<id>`, and `?post=<slug>` on load, updating `<title>` and the canonical link so shared/indexed URLs open the right view. These URLs are listed in `app/sitemap.js`.
+- **sitemap.xml / robots.txt**: every firm + blog post + the giveaway are in the sitemap; `/admin` and `/api/` are disallowed.
+- **Note for max indexability**: the site is a single-page app, so all sub-views share one server-rendered URL. The deep links + sitemap get you indexed, but converting firm/blog views to real Next.js routes (`app/firms/[id]`, `app/blog/[slug]`) is the next step for the strongest per-page SEO — the data is ready to be split out.
+
+## Infrastructure — all MCP-manageable
+Everything this project runs on can be driven through MCP servers from Claude:
+- **Vercel MCP** — deploy, inspect builds, read runtime logs/errors, manage the project and domains.
+- **Upstash Redis** — the only datastore (entries, proofs, winners). REST-based; manageable via the Upstash console/API.
+- **Vercel Blob** — receipt image storage, toggled on in the Vercel dashboard.
+No bespoke servers, cron jobs, or databases to babysit — it's serverless routes + Redis + Blob, all behind Vercel.
