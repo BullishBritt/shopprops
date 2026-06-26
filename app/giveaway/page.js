@@ -15,6 +15,14 @@ const MUTED = '#64748b';
 const TEXT = '#cbd5e1';
 
 const STORE_KEY = 'shopprops_giveaway_email';
+const PROMO = 'BRITT';
+const PROOF_BONUS = 25;
+
+// Firms a buyer can attach proof to (keep in sync with the main site).
+const FIRM_OPTIONS = [
+  'Lucid Trading', 'Tradeify', 'Alpha Futures', 'Apex Trader Funding', 'Top One Futures',
+  'My Funded Futures', 'Take Profit Trader', 'Bulenox', 'FundedNext', 'Topstep', 'Other',
+];
 
 const TASK_META = [
   { id: 'follow_x', icon: '𝕏', label: 'Follow @ShopProps on X', url: 'https://x.com' },
@@ -46,6 +54,14 @@ export default function GiveawayPage() {
   const [openFaq, setOpenFaq] = useState(null);
   const [pendingTask, setPendingTask] = useState(null);
   const [toast, setToast] = useState('');
+  // proof-of-code upload
+  const [pFirm, setPFirm] = useState('');
+  const [pCode, setPCode] = useState(PROMO);
+  const [pAmount, setPAmount] = useState('');
+  const [pFile, setPFile] = useState(null);
+  const [pLoading, setPLoading] = useState(false);
+  const [pError, setPError] = useState('');
+  const [pHistory, setPHistory] = useState([]);
 
   // ── load status + capture ?ref + restore saved entrant ──
   const fetchStatus = useCallback(async (em) => {
@@ -145,6 +161,50 @@ export default function GiveawayPage() {
       }
     } catch {}
     setPendingTask(null);
+  };
+
+  const fetchProofs = useCallback(async (em) => {
+    if (!em) return;
+    try {
+      const res = await fetch('/api/proof?email=' + encodeURIComponent(em));
+      const data = await res.json();
+      setPHistory(data.proofs || []);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    const em = (user?.email || email || '').trim().toLowerCase();
+    if (em) fetchProofs(em);
+  }, [user, fetchProofs]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const submitProof = async () => {
+    setPError('');
+    const em = (user?.email || email || '').trim().toLowerCase();
+    const nm = (user?.name || name || '').trim();
+    if (nm.length < 2) return setPError('Enter your name above first.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return setPError('Enter a valid email above first.');
+    if (!pFirm) return setPError('Pick which prop firm you bought from.');
+    if (!pCode.trim()) return setPError('Enter the code you used.');
+    if (!pFile) return setPError('Attach a screenshot or receipt.');
+    setPLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append('name', nm); fd.append('email', em); fd.append('firm', pFirm);
+      fd.append('code', pCode.trim()); fd.append('amount', pAmount.trim()); fd.append('image', pFile);
+      const res = await fetch('/api/proof', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        setPFile(null); setPAmount('');
+        setToast('Proof submitted — bonus entries land once approved! 🧾');
+        setTimeout(() => setToast(''), 4500);
+        fetchProofs(em);
+      } else {
+        setPError(data.error || 'Upload failed.');
+      }
+    } catch {
+      setPError('Upload failed. Try again.');
+    }
+    setPLoading(false);
   };
 
   const shareUrl = user?.referralUrl || '';
@@ -361,6 +421,61 @@ export default function GiveawayPage() {
             </div>
           </div>
         )}
+      </section>
+
+      {/* ── PROOF OF CODE → BONUS ENTRIES ── */}
+      <section style={{ maxWidth: 560, margin: '0 auto', padding: '24px 24px' }}>
+        <div style={{ ...S.card, padding: 36, borderColor: `${GREEN}30`, background: `linear-gradient(180deg,${GREEN}08,transparent)` }}>
+          <div style={{ textAlign: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 34 }}>🧾</span>
+          </div>
+          <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 30, color: '#fff', letterSpacing: 1, textAlign: 'center', marginBottom: 6 }}>
+            Used code <span style={{ color: GREEN }}>{PROMO}</span>? Get +{PROOF_BONUS} entries
+          </h2>
+          <p style={{ textAlign: 'center', color: MUTED, fontSize: 14, marginBottom: 22 }}>
+            Bought a prop firm eval with code <strong style={{ color: TEXT }}>{PROMO}</strong>? Upload your receipt or order screenshot.
+            Once we verify it, {PROOF_BONUS} bonus entries get added to your name.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <select className="gv-input" style={{ ...S.input, appearance: 'none' }} value={pFirm} onChange={e => setPFirm(e.target.value)}>
+              <option value="">Which prop firm?</option>
+              {FIRM_OPTIONS.map(f => <option key={f} value={f}>{f}</option>)}
+            </select>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input className="gv-input" style={{ ...S.input, flex: 1 }} placeholder="Code used" value={pCode} onChange={e => setPCode(e.target.value.toUpperCase())} />
+              <input className="gv-input" style={{ ...S.input, flex: 1 }} placeholder="Order $ (optional)" value={pAmount} onChange={e => setPAmount(e.target.value)} />
+            </div>
+            <label style={{ display: 'block', border: `1px dashed ${pFile ? GREEN : BORDER}`, borderRadius: 10, padding: '18px 14px', textAlign: 'center', cursor: 'pointer', color: pFile ? GREEN : MUTED, fontSize: 14, transition: 'all .2s' }}>
+              {pFile ? `✓ ${pFile.name}` : '📎 Attach receipt / screenshot (PNG, JPG, PDF · max 8MB)'}
+              <input type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={e => setPFile(e.target.files?.[0] || null)} />
+            </label>
+            {pError && <p style={{ color: '#f87171', fontSize: 13 }}>{pError}</p>}
+            {!user && <p style={{ color: MUTED, fontSize: 12 }}>Tip: enter the giveaway above first so your bonus attaches to your entries.</p>}
+            <button className="gv-btn" style={{ ...S.btn, width: '100%', background: GREEN, color: '#04210f', opacity: isActive ? 1 : 0.5, cursor: isActive ? 'pointer' : 'not-allowed' }} onClick={submitProof} disabled={pLoading || !isActive}>
+              {pLoading ? 'Uploading…' : isActive ? `Submit Proof → +${PROOF_BONUS}` : 'Entries Closed'}
+            </button>
+          </div>
+
+          {pHistory.length > 0 && (
+            <div style={{ marginTop: 20, borderTop: `1px solid ${BORDER}`, paddingTop: 16 }}>
+              <div style={{ ...S.label, marginBottom: 10 }}>Your submissions</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {pHistory.map(p => {
+                  const c = p.status === 'approved' ? GREEN : p.status === 'rejected' ? '#f87171' : '#f59e0b';
+                  return (
+                    <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: TEXT }}>
+                      <span>{p.firm} · <span style={{ ...S.label, color: MUTED }}>{p.code}</span></span>
+                      <span style={{ color: c, fontWeight: 600, textTransform: 'capitalize' }}>
+                        {p.status === 'approved' ? `✓ +${p.entriesAwarded}` : p.status}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
       </section>
 
       {/* ── HOW IT WORKS ── */}

@@ -59,6 +59,7 @@ award more. The winner is drawn at random, weighted by entry count.
 | `UPSTASH_REDIS_REST_TOKEN` | yes | Upstash Redis REST token |
 | `GIVEAWAY_ADMIN_SECRET` | yes (for admin) | Secret guarding the admin endpoint |
 | `NEXT_PUBLIC_SITE_URL` | recommended | Public base URL used in referral links (e.g. `https://shopprops.co`) |
+| `BLOB_READ_WRITE_TOKEN` | for receipt uploads | Auto-provisioned when you enable Vercel Blob (Storage tab). Stores uploaded receipts. Without it, proof submissions are still recorded (text only). |
 
 Without Redis configured the page still renders and shows a "coming soon" state —
 nothing breaks. Create a free database at [upstash.com](https://upstash.com) and
@@ -79,6 +80,36 @@ curl ... -d '{"action":"stop"}'           # close entries
 curl ... -d '{"action":"reset","confirm":"RESET"}'  # wipe all giveaway data
 ```
 
+### Proof-of-code receipts → bonus entries
+Traders who used your promo code can upload a receipt/screenshot at `/giveaway`
+(the "Used code BRITT?" card). Each submission lands in a review queue; approving
+it grants the entrant bonus entries (default **+25**) and ties their email to the
+firm + code they used — so you can see exactly who is using your code.
+
+```bash
+# List pending receipts
+curl ... -d '{"action":"proofs","status":"pending"}'
+# Approve one (grants the bonus, default 25; override with "bonus")
+curl ... -d '{"action":"approveProof","id":"p_xxx","bonus":25}'
+# Reject one
+curl ... -d '{"action":"rejectProof","id":"p_xxx","reason":"unreadable"}'
+```
+
+### Weekly winners
+The giveaway tracks a `round` counter and logs every winner.
+
+```bash
+curl ... -d '{"action":"draw","count":1,"excludePastWinners":true}'  # draw this week's winner
+curl ... -d '{"action":"winners"}'                                    # full winner history
+curl ... -d '{"action":"newRound"}'                                   # advance to next week
+```
+
+A simple weekly cadence: each week run `draw` (logs the winner) → contact them at the
+email they entered with → run `newRound`. Entries are cumulative across rounds; use
+`excludePastWinners` so the same person can't win twice, or `reset` to start totals fresh.
+
 ### Tuning the giveaway
 - **Prizes, bonus amounts, social tasks**: edit the `PRIZES`, `REFERRAL_BONUS`, and `TASKS` constants at the top of `app/api/giveaway/route.js`.
+- **Proof bonus amount**: `PROOF_BONUS` in `app/api/giveaway/admin/route.js` (and the display value `PROOF_BONUS` in `app/giveaway/page.js`).
 - **Social task links / FAQ / copy**: edit `TASK_META` and `FAQS` in `app/giveaway/page.js`.
+- **Prop firm data / logos**: the `FIRMS` array and `FirmLogo` SVGs at the top of `app/page.js`. Drop official brand PNGs into `/public` and reference them to replace the placeholder SVGs.

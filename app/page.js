@@ -112,6 +112,8 @@ const FIRMS = [
   { id:"takeprofittrader", name:"Take Profit Trader", logo:"$", founded:2021, hq:"Orlando, FL", rating:4.3, eval:"1-Step", price50k:"$170", profitTarget50k:"$3,000", maxLoss50k:"$2,000", drawdownType:"Intraday Trailing (some EOD)", dailyLossLimit:"Yes", profitSplit:"80/20 → 90/10", first10k:"80/20", payoutSpeed:"Same day", payoutFreq:"Daily eligible", minPayoutDays:1, maxAccounts:5, platforms:"NinjaTrader, Tradovate, TradingView", swingTrading:"Yes", newsTrading:"Yes", scalping:"Yes", consistency:"No", activationFee:"$0", maxAccount:"$250,000", payoutCap:"Varies by progression", nfa:false, featured:false, affiliate:"#", desc:"Path to live capital trading. Daily withdrawal eligibility from day one with no activation fees. Offers a route to trading real money.", pros:["Daily payouts from day 1","Path to live capital","No activation fee","Swing trading allowed"], cons:["Intraday trailing drawdown","80/20 initial split","Higher eval price"], plans:[] },
   { id:"bulenox", name:"Bulenox", logo:"B", founded:2022, hq:"United States", rating:4.1, eval:"1-Step", price50k:"$175", profitTarget50k:"$3,000", maxLoss50k:"$2,500 trailing", drawdownType:"Intraday Trailing", dailyLossLimit:"Yes ($500-$1,250)", profitSplit:"90/10", first10k:"100% first $10K", payoutSpeed:"3-7 days", payoutFreq:"Weekly", minPayoutDays:5, maxAccounts:5, platforms:"NinjaTrader, Rithmic, Tradovate", swingTrading:"No", newsTrading:"Yes", scalping:"Yes", consistency:"No", activationFee:"$0-$130", maxAccount:"$250,000", payoutCap:"Progressive", nfa:false, featured:false, affiliate:"https://bulenox.com/member/aff/go/bullishbritt", desc:"Budget-friendly option with weekly payouts. Stricter daily loss limits but no consistency rules. Multiple evaluation plans available.", pros:["Budget-friendly pricing","Weekly payouts","Multiple plan options","100% first $10K"], cons:["Strict daily loss limits","Intraday trailing drawdown","No overnight positions"], plans:[] },
   { id:"fundednext", name:"FundedNext Futures", logo:"F", founded:2023, hq:"UAE / Global", rating:4.3, eval:"1-Step", price50k:"$149", profitTarget50k:"$3,000", maxLoss50k:"$2,000", drawdownType:"EOD Trailing", dailyLossLimit:"Yes", profitSplit:"80/20", first10k:"80/20", payoutSpeed:"24 hours guaranteed", payoutFreq:"After requirements met", minPayoutDays:5, maxAccounts:5, platforms:"NinjaTrader, Tradovate, Rithmic", swingTrading:"No", newsTrading:"Yes", scalping:"Yes", consistency:"40%", activationFee:"$0", maxAccount:"$200,000", payoutCap:"Progressive", nfa:false, featured:false, affiliate:"#", desc:"Guarantees payouts within 24 hours or compensates traders $1,000. Strong brand presence with global operations.", pros:["24hr payout guarantee","$1K compensation if late","No activation fee","Strong brand"], cons:["80/20 profit split","40% consistency rule","Lower split than competitors"], plans:[] },
+  { id:"topstep", name:"Topstep", logo:"TS", founded:2012, hq:"Chicago, IL", rating:4.6, eval:"1-Step (Trading Combine)", price50k:"$49/mo (frequent discounts)", profitTarget50k:"$3,000", maxLoss50k:"$2,000", drawdownType:"EOD Trailing", dailyLossLimit:"Yes (scales with size)", profitSplit:"100% first $5K, then 90/10", first10k:"100% of first $5K", payoutSpeed:"~2-3 business days", payoutFreq:"After winning-day requirement", minPayoutDays:5, maxAccounts:5, platforms:"TSTrader, NinjaTrader, Tradovate", swingTrading:"No", newsTrading:"Yes", scalping:"Yes", consistency:"No", activationFee:"$0", maxAccount:"$150,000", payoutCap:"Progressive", nfa:false, featured:false, affiliate:"#", desc:"One of the oldest and most trusted names in the space (since 2012). The Trading Combine is a single-step evaluation with end-of-day trailing drawdown. Traders keep 100% of their first $5,000 in profits, then move to a 90/10 split. Strong education and a long track record of paying traders.", pros:["Established since 2012 — long track record","100% of first $5K in profits","End-of-day trailing drawdown","Excellent education & support","Frequent eval discounts"], cons:["Monthly subscription model","Winning-day requirements before payout","No swing trading"], plans:[] },
+  { id:"earn2trade", name:"Earn2Trade", logo:"E2T", founded:2018, hq:"Atlanta, GA", rating:4.2, eval:"Gauntlet Mini / Gauntlet", price50k:"$150/mo (Gauntlet Mini)", profitTarget50k:"$3,000", maxLoss50k:"$2,000", drawdownType:"Trailing (EOD on Mini)", dailyLossLimit:"Yes", profitSplit:"80/20", first10k:"80/20", payoutSpeed:"Bi-weekly", payoutFreq:"Bi-weekly", minPayoutDays:5, maxAccounts:3, platforms:"NinjaTrader, Tradovate, Finamark", swingTrading:"No", newsTrading:"Yes", scalping:"Yes", consistency:"No", activationFee:"$0", maxAccount:"$200,000", payoutCap:"Progressive", nfa:false, featured:false, affiliate:"#", desc:"Education-first prop firm known for its structured Gauntlet Mini evaluation and trader training. End-of-day trailing drawdown on the Mini program and a clear, rules-based path to funding. A solid pick for traders who want to learn the fundamentals alongside their evaluation.", pros:["Strong trader education","Clear rules-based evaluation","EOD trailing on Gauntlet Mini","Established reputation"], cons:["80/20 profit split","Bi-weekly payouts (slower)","Fewer simultaneous accounts"], plans:[] },
 ];
 
 const BLOG_POSTS = [
@@ -222,6 +224,23 @@ const FirmLogo = ({ id, size = 36 }) => {
         <path d="M18 15H22L20 12L18 15Z" fill="#eab308"/>
         <rect x="19" y="15" width="2.5" height="12" rx="1" fill="#eab308"/>
         <rect x="16" y="28" width="8" height="2" rx="1" fill="#eab308" opacity="0.6"/>
+      </svg>
+    ),
+    topstep: (
+      <svg width={s} height={s} viewBox="0 0 40 40" fill="none">
+        <rect width="40" height="40" rx="8" fill="#0a1f17"/>
+        <path d="M10 24L17 17L22 22L30 13" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M24 13H30V19" stroke="#10b981" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+        <rect x="9" y="27" width="22" height="2.4" rx="1.2" fill="#10b981" opacity="0.5"/>
+        <rect x="9" y="31.5" width="14" height="2.2" rx="1.1" fill="#10b981" opacity="0.3"/>
+      </svg>
+    ),
+    earn2trade: (
+      <svg width={s} height={s} viewBox="0 0 40 40" fill="none">
+        <rect width="40" height="40" rx="8" fill="#101a2e"/>
+        <circle cx="20" cy="20" r="12" stroke="#3b82f6" strokeWidth="2" fill="none"/>
+        <path d="M20 13V20L25 23" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <circle cx="20" cy="20" r="2" fill="#3b82f6"/>
       </svg>
     ),
   };
@@ -1049,6 +1068,9 @@ export default function ShopProps() {
           </p>
           <p style={{...S.mono,fontSize:9,color:"#1e293b",marginTop:8}}>
             Affiliate disclosure: Some links may earn commissions at no extra cost to you.
+          </p>
+          <p style={{...S.mono,fontSize:9,color:"#1e293b",marginTop:6,maxWidth:680,margin:"6px auto 0",lineHeight:1.5}}>
+            Firm rules, pricing, and payout terms change frequently. Figures here are compiled independently and may be out of date — always confirm the current terms on the firm's official site before purchasing.
           </p>
         </div>
       </div>
