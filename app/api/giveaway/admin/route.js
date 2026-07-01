@@ -28,6 +28,23 @@ function authorized(request, body) {
   return provided === secret;
 }
 
+// Resolve the live wheel pool into display entrants. Members are either an
+// email (a real entrant who joined during the window) or "name:<typed name>"
+// for admin-added names. Returns { member, name, email } for each.
+async function resolveLivePool(r) {
+  const members = await r.zrange('giveaway:live:entrants', 0, -1);
+  const out = [];
+  for (const m of members || []) {
+    if (typeof m === 'string' && m.startsWith('name:')) {
+      out.push({ member: m, name: m.slice(5), email: '' });
+    } else {
+      const u = await loadUser(r, m);
+      out.push({ member: m, name: u?.name || String(m).split('@')[0], email: m });
+    }
+  }
+  return out;
+}
+
 async function getProof(r, id) {
   const p = await r.hgetall(`proof:${id}`);
   if (!p || !p.id) return null;
@@ -168,26 +185,37 @@ export async function POST(request) {
       return Response.json({ success: true });
     }
 
+    if (action === 'addLiveName') {
+      // Manually put a name on the wheel (admin-only / "only I can add" mode).
+      const name = String(body.name || '').trim().slice(0, 40);
+      if (name.length < 1) return Response.json({ error: 'Enter a name.' }, { status: 400 });
+      await r.zadd('giveaway:live:entrants', { score: Date.now(), member: `name:${name}` });
+      const count = await r.zcard('giveaway:live:entrants');
+      return Response.json({ success: true, count });
+    }
+
+    if (action === 'removeLiveName') {
+      const member = String(body.member || '');
+      if (member) await r.zrem('giveaway:live:entrants', member);
+      const count = await r.zcard('giveaway:live:entrants');
+      return Response.json({ success: true, count });
+    }
+
+    if (action === 'clearLive') {
+      await r.del('giveaway:live:entrants');
+      return Response.json({ success: true, count: 0 });
+    }
+
     if (action === 'liveEntrants') {
       const active = await r.get('giveaway:live:active');
       const endsAt = Number(await r.get('giveaway:live:endsAt') || 0);
-      const emails = await r.zrange('giveaway:live:entrants', 0, -1);
-      const entrants = [];
-      for (const em of emails || []) {
-        const u = await loadUser(r, em);
-        entrants.push({ email: em, name: u?.name || em.split('@')[0] });
-      }
+      const entrants = await resolveLivePool(r);
       return Response.json({ success: true, active: !!active, endsAt, open: !!active && Date.now() < endsAt, count: entrants.length, entrants });
     }
 
     if (action === 'drawLive') {
-      const emails = await r.zrange('giveaway:live:entrants', 0, -1);
-      const entrants = [];
-      for (const em of emails || []) {
-        const u = await loadUser(r, em);
-        entrants.push({ email: em, name: u?.name || em.split('@')[0] });
-      }
-      if (!entrants.length) return Response.json({ error: 'No one entered this round yet.' }, { status: 400 });
+      const entrants = await resolveLivePool(r);
+      if (!entrants.length) return Response.json({ error: 'No one is on the wheel yet.' }, { status: 400 });
       const winnerIndex = Math.floor(Math.random() * entrants.length);
       const winner = entrants[winnerIndex];
       const round = Number(await r.get('giveaway:round') || 1);

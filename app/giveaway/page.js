@@ -20,8 +20,7 @@ const PROOF_BONUS = 25;
 
 // Firms a buyer can attach proof to (keep in sync with the main site).
 const FIRM_OPTIONS = [
-  'Lucid Trading', 'Tradeify', 'Alpha Futures', 'Apex Trader Funding', 'Top One Futures',
-  'My Funded Futures', 'Take Profit Trader', 'Bulenox', 'FundedNext', 'Topstep', 'Other',
+  'Tradeify', 'Lucid Trading', 'Alpha Futures', 'Topstep', 'Bulenox', 'Other',
 ];
 
 const TASK_META = [

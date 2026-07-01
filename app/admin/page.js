@@ -82,6 +82,7 @@ export default function AdminPage() {
   const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [liveWinner, setLiveWinner] = useState(null);
+  const [liveName, setLiveName] = useState('');
 
   // ── API helper ──
   const call = useCallback(async (action, extra = {}, sec) => {
@@ -122,6 +123,18 @@ export default function AdminPage() {
     setLiveWinner(null); setWheelEntrants([]); setRotation(0);
     const d = await act('startLive', { minutes: Number(liveMinutes) });
     if (d?.success) { flash(`Live round open for ${d.minutes} min!`); loadLive(); }
+  };
+
+  const addName = async () => {
+    if (!liveName.trim()) return;
+    const d = await act('addLiveName', { name: liveName.trim() });
+    if (d?.success) { setLiveName(''); loadLive(); }
+  };
+
+  const clearPool = async () => {
+    if (!window.confirm('Clear everyone off the wheel?')) return;
+    const d = await act('clearLive');
+    if (d?.success) { setWheelEntrants([]); setLiveWinner(null); setRotation(0); loadLive(); }
   };
 
   const spin = async () => {
@@ -307,6 +320,21 @@ export default function AdminPage() {
                 </div>
               </div>
 
+              <div style={S.card}>
+                <div style={{ ...S.label, marginBottom: 8 }}>Add names yourself (admin-only mode)</div>
+                <p style={{ color: MUTED, fontSize: 12, marginBottom: 10, lineHeight: 1.5 }}>
+                  Don't start a public round and type names here instead — only you can add. Or mix: start a round <em>and</em> add a few manually.
+                </p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input value={liveName} onChange={e => setLiveName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addName()}
+                    placeholder="Name" style={{ ...S.input, flex: 1 }} />
+                  <button style={S.btn} disabled={busy || !liveName.trim()} onClick={addName}>+ Add</button>
+                </div>
+                {liveInfo?.count > 0 && (
+                  <button style={{ ...S.ghost, color: RED, borderColor: RED + '40', marginTop: 10 }} onClick={clearPool}>Clear wheel</button>
+                )}
+              </div>
+
               <div style={{ ...S.card, textAlign: 'center' }}>
                 <div style={{ ...S.label }}>Entries this round</div>
                 <div style={{ fontFamily: "'Space Mono',monospace", fontSize: 48, fontWeight: 700, color: CYAN, lineHeight: 1.1 }}>{liveInfo?.count ?? 0}</div>
@@ -326,7 +354,10 @@ export default function AdminPage() {
                   <div style={{ ...S.label, marginBottom: 8 }}>In the pool</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {liveInfo.entrants.map(e => (
-                      <span key={e.email} style={{ fontSize: 12, background: '#0a0f17', border: `1px solid ${BORDER}`, borderRadius: 20, padding: '4px 10px', color: TEXT }}>{e.name}</span>
+                      <span key={e.member} style={{ fontSize: 12, background: '#0a0f17', border: `1px solid ${BORDER}`, borderRadius: 20, padding: '4px 6px 4px 10px', color: TEXT, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        {e.name}
+                        <button onClick={async () => { await act('removeLiveName', { member: e.member }); loadLive(); }} style={{ background: 'none', border: 'none', color: MUTED, cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: 0 }} title="Remove">×</button>
+                      </span>
                     ))}
                   </div>
                 </div>

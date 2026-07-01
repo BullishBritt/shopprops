@@ -1,9 +1,6 @@
 // Keep FIRM_IDS / BLOG_SLUGS in sync with the FIRMS and BLOG_POSTS arrays
 // in app/page.js. These deep-link query params are read on load by the SPA.
-const FIRM_IDS = [
-  'tradeify', 'lucid', 'alphaF', 'apex', 'topone', 'mff',
-  'takeprofittrader', 'bulenox', 'fundednext', 'topstep', 'earn2trade',
-];
+const FIRM_IDS = ['tradeify', 'lucid', 'alphaF', 'topstep', 'bulenox'];
 
 const BLOG_SLUGS = [
   'what-is-a-prop-firm', 'how-prop-firm-payouts-work', 'understanding-payout-splits',
