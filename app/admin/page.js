@@ -18,6 +18,47 @@ const BORDER = '#151d2b';
 const MUTED = '#64748b';
 const TEXT = '#cbd5e1';
 const KEY = 'shopprops_admin_secret';
+const WHEEL_COLORS = ['#00e5ff', '#22c55e', '#0ea5e9', '#14b8a6', '#38bdf8', '#4ade80'];
+
+// ── Spin-the-wheel (live giveaway) ──────────────────────────────
+function Wheel({ entrants, rotation, spinning }) {
+  const R = 190, cx = 200, cy = 200;
+  const n = Math.max(entrants.length, 1);
+  const seg = 360 / n;
+  const toXY = (deg, rad) => {
+    const a = ((-90 + deg) * Math.PI) / 180; // 0° at top, clockwise
+    return [cx + rad * Math.cos(a), cy + rad * Math.sin(a)];
+  };
+  return (
+    <div style={{ position: 'relative', width: '100%', maxWidth: 400, margin: '0 auto' }}>
+      {/* pointer */}
+      <div style={{ position: 'absolute', top: -6, left: '50%', transform: 'translateX(-50%)', zIndex: 3, width: 0, height: 0, borderLeft: '14px solid transparent', borderRight: '14px solid transparent', borderTop: '24px solid #fff', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.5))' }} />
+      <svg viewBox="0 0 400 400" style={{ width: '100%', transform: `rotate(${rotation}deg)`, transition: spinning ? 'transform 5.5s cubic-bezier(.17,.67,.16,1)' : 'none' }}>
+        {entrants.length === 0 ? (
+          <circle cx={cx} cy={cy} r={R} fill="#0c1119" stroke="#151d2b" strokeWidth="2" />
+        ) : entrants.map((e, i) => {
+          const [x1, y1] = toXY(i * seg, R);
+          const [x2, y2] = toXY((i + 1) * seg, R);
+          const large = seg > 180 ? 1 : 0;
+          const [lx, ly] = toXY(i * seg + seg / 2, R * 0.62);
+          const mid = i * seg + seg / 2;
+          const label = (e.name || '').slice(0, 14);
+          return (
+            <g key={i}>
+              <path d={`M${cx},${cy} L${x1},${y1} A${R},${R} 0 ${large} 1 ${x2},${y2} Z`} fill={WHEEL_COLORS[i % WHEEL_COLORS.length]} stroke="#070b11" strokeWidth="1.5" />
+              {n <= 40 && (
+                <text x={lx} y={ly} fill="#04210f" fontSize={n > 24 ? 9 : 12} fontWeight="700" textAnchor="middle" dominantBaseline="middle"
+                  transform={`rotate(${mid}, ${lx}, ${ly})`} style={{ fontFamily: "'Outfit',sans-serif" }}>{label}</text>
+              )}
+            </g>
+          );
+        })}
+        <circle cx={cx} cy={cy} r={R} fill="none" stroke="#1e293b" strokeWidth="3" />
+        <circle cx={cx} cy={cy} r={26} fill="#070b11" stroke="#00e5ff" strokeWidth="2" />
+      </svg>
+    </div>
+  );
+}
 
 export default function AdminPage() {
   const [secret, setSecret] = useState('');
@@ -33,6 +74,14 @@ export default function AdminPage() {
   const [endDate, setEndDate] = useState('');
   const [drawCount, setDrawCount] = useState(1);
   const [excludePast, setExcludePast] = useState(true);
+  // live "spin the wheel" round
+  const [liveMinutes, setLiveMinutes] = useState(5);
+  const [liveInfo, setLiveInfo] = useState(null);
+  const [liveCountdown, setLiveCountdown] = useState(null);
+  const [wheelEntrants, setWheelEntrants] = useState([]);
+  const [rotation, setRotation] = useState(0);
+  const [spinning, setSpinning] = useState(false);
+  const [liveWinner, setLiveWinner] = useState(null);
 
   // ── API helper ──
   const call = useCallback(async (action, extra = {}, sec) => {
@@ -63,6 +112,49 @@ export default function AdminPage() {
     const d = await call('winners');
     if (!d.error) setWinners(d.winners || []);
   }, [call]);
+
+  const loadLive = useCallback(async () => {
+    const d = await call('liveEntrants');
+    if (!d.error) setLiveInfo(d);
+  }, [call]);
+
+  const startLive = async () => {
+    setLiveWinner(null); setWheelEntrants([]); setRotation(0);
+    const d = await act('startLive', { minutes: Number(liveMinutes) });
+    if (d?.success) { flash(`Live round open for ${d.minutes} min!`); loadLive(); }
+  };
+
+  const spin = async () => {
+    if (spinning) return;
+    const d = await act('drawLive');
+    if (!d?.success) return;
+    const list = d.entrants || [];
+    setWheelEntrants(list);
+    setLiveWinner(null);
+    // land the winner's slice under the top pointer, after several full spins
+    const n = Math.max(list.length, 1);
+    const seg = 360 / n;
+    const target = 360 * 8 - (d.winnerIndex + 0.5) * seg;
+    setSpinning(true);
+    setRotation(prev => prev - (prev % 360) + target); // normalize then add
+    setTimeout(() => { setSpinning(false); setLiveWinner(d.winner); flash(`🎉 Winner: ${d.winner.name}`); loadStats(); loadWinners(); }, 5600);
+  };
+
+  // poll the live pool + run the entry-window countdown
+  useEffect(() => {
+    if (tab !== 'live' || !authed) return;
+    loadLive();
+    const poll = setInterval(loadLive, 2500);
+    const tick = setInterval(() => {
+      setLiveInfo(info => {
+        if (!info?.endsAt) { setLiveCountdown(null); return info; }
+        const s = Math.max(0, Math.round((info.endsAt - Date.now()) / 1000));
+        setLiveCountdown(s);
+        return info;
+      });
+    }, 1000);
+    return () => { clearInterval(poll); clearInterval(tick); };
+  }, [tab, authed, loadLive]);
 
   // restore session
   useEffect(() => {
@@ -164,7 +256,7 @@ export default function AdminPage() {
 
         {/* tabs */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-          {[['overview', 'Overview'], ['proofs', `Proofs${stats?.pendingProofs ? ` (${stats.pendingProofs})` : ''}`], ['winners', 'Winners'], ['controls', 'Controls']].map(([k, l]) => (
+          {[['overview', 'Overview'], ['live', '🎡 Live Wheel'], ['proofs', `Proofs${stats?.pendingProofs ? ` (${stats.pendingProofs})` : ''}`], ['winners', 'Winners'], ['controls', 'Controls']].map(([k, l]) => (
             <button key={k} onClick={() => setTab(k)} style={{ ...S.ghost, ...(tab === k ? { color: CYAN, borderColor: CYAN } : {}) }}>{l}</button>
           ))}
         </div>
@@ -193,6 +285,68 @@ export default function AdminPage() {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* ── LIVE WHEEL ── */}
+        {tab === 'live' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.2fr)', gap: 16, alignItems: 'start' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={S.card}>
+                <div style={{ ...S.label, marginBottom: 12 }}>Live round — for TikTok / streams</div>
+                <p style={{ color: MUTED, fontSize: 13, marginBottom: 14, lineHeight: 1.5 }}>
+                  Start a round, viewers get a window to enter at <strong style={{ color: TEXT }}>/giveaway</strong>, then spin. Only people who enter <em>during the window</em> are on the wheel.
+                </p>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <label style={{ fontSize: 13, color: MUTED }}>Minutes
+                    <input type="number" min={1} max={60} value={liveMinutes} onChange={e => setLiveMinutes(e.target.value)} style={{ ...S.input, width: 70, marginLeft: 6 }} />
+                  </label>
+                  <button style={{ ...S.btn, background: GREEN, color: '#04210f' }} disabled={busy} onClick={startLive}>▶ Start round</button>
+                  {liveInfo?.active && <button style={{ ...S.ghost, color: AMBER, borderColor: AMBER + '50' }} onClick={async () => { await act('stopLive'); loadLive(); }}>⏸ Close entries</button>}
+                </div>
+              </div>
+
+              <div style={{ ...S.card, textAlign: 'center' }}>
+                <div style={{ ...S.label }}>Entries this round</div>
+                <div style={{ fontFamily: "'Space Mono',monospace", fontSize: 48, fontWeight: 700, color: CYAN, lineHeight: 1.1 }}>{liveInfo?.count ?? 0}</div>
+                {liveInfo?.open ? (
+                  <div style={{ ...S.label, color: liveCountdown <= 30 ? RED : GREEN }}>
+                    ● OPEN · {liveCountdown != null ? `${Math.floor(liveCountdown / 60)}:${String(liveCountdown % 60).padStart(2, '0')}` : '…'} left
+                  </div>
+                ) : liveInfo?.active === false && liveInfo?.count > 0 ? (
+                  <div style={{ ...S.label, color: AMBER }}>Entries closed — ready to spin</div>
+                ) : (
+                  <div style={{ ...S.label, color: MUTED }}>No round running</div>
+                )}
+              </div>
+
+              {liveInfo?.entrants?.length > 0 && (
+                <div style={{ ...S.card, maxHeight: 220, overflowY: 'auto' }}>
+                  <div style={{ ...S.label, marginBottom: 8 }}>In the pool</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {liveInfo.entrants.map(e => (
+                      <span key={e.email} style={{ fontSize: 12, background: '#0a0f17', border: `1px solid ${BORDER}`, borderRadius: 20, padding: '4px 10px', color: TEXT }}>{e.name}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={{ ...S.card, textAlign: 'center', padding: 24 }}>
+              {liveWinner && (
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ ...S.label, color: GREEN }}>🎉 Winner</div>
+                  <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 40, color: '#fff', letterSpacing: 1, lineHeight: 1 }}>{liveWinner.name}</div>
+                  <div style={{ ...S.label, color: MUTED }}>{liveWinner.email}</div>
+                </div>
+              )}
+              <Wheel entrants={wheelEntrants.length ? wheelEntrants : (liveInfo?.entrants || [])} rotation={rotation} spinning={spinning} />
+              <button style={{ ...S.btn, marginTop: 20, padding: '14px 40px', fontSize: 15, background: spinning ? BORDER : CYAN, cursor: spinning ? 'wait' : 'pointer' }}
+                disabled={spinning || busy || !(liveInfo?.count > 0)} onClick={spin}>
+                {spinning ? 'Spinning…' : '🎡 SPIN THE WHEEL'}
+              </button>
+              {!(liveInfo?.count > 0) && <p style={{ ...S.label, marginTop: 10, color: MUTED }}>Waiting for entries…</p>}
             </div>
           </div>
         )}

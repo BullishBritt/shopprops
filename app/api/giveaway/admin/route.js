@@ -151,6 +151,52 @@ export async function POST(request) {
       return Response.json({ success: true, round });
     }
 
+    // ── live "spin the wheel" round ──
+    if (action === 'startLive') {
+      const minutes = Math.max(1, Math.min(60, Number(body.minutes || 5)));
+      const endsAt = Date.now() + minutes * 60000;
+      await r.set('giveaway:active', '1');          // ensure entries are accepted
+      await r.del('giveaway:live:entrants');         // fresh pool for this round
+      await r.set('giveaway:live:active', '1');
+      await r.set('giveaway:live:endsAt', endsAt);
+      if (!(await r.get('giveaway:round'))) await r.set('giveaway:round', 1);
+      return Response.json({ success: true, endsAt, minutes });
+    }
+
+    if (action === 'stopLive') {
+      await r.set('giveaway:live:active', '');
+      return Response.json({ success: true });
+    }
+
+    if (action === 'liveEntrants') {
+      const active = await r.get('giveaway:live:active');
+      const endsAt = Number(await r.get('giveaway:live:endsAt') || 0);
+      const emails = await r.zrange('giveaway:live:entrants', 0, -1);
+      const entrants = [];
+      for (const em of emails || []) {
+        const u = await loadUser(r, em);
+        entrants.push({ email: em, name: u?.name || em.split('@')[0] });
+      }
+      return Response.json({ success: true, active: !!active, endsAt, open: !!active && Date.now() < endsAt, count: entrants.length, entrants });
+    }
+
+    if (action === 'drawLive') {
+      const emails = await r.zrange('giveaway:live:entrants', 0, -1);
+      const entrants = [];
+      for (const em of emails || []) {
+        const u = await loadUser(r, em);
+        entrants.push({ email: em, name: u?.name || em.split('@')[0] });
+      }
+      if (!entrants.length) return Response.json({ error: 'No one entered this round yet.' }, { status: 400 });
+      const winnerIndex = Math.floor(Math.random() * entrants.length);
+      const winner = entrants[winnerIndex];
+      const round = Number(await r.get('giveaway:round') || 1);
+      const w = { email: winner.email, name: winner.name, entries: 1, round, live: true, ts: Date.now() };
+      await r.lpush('giveaway:winners', JSON.stringify(w));
+      await r.set('giveaway:live:active', ''); // close the round once drawn
+      return Response.json({ success: true, winner, winnerIndex, entrants });
+    }
+
     if (action === 'reset') {
       if (body.confirm !== 'RESET') return Response.json({ error: 'Pass confirm:"RESET" to wipe all data.' }, { status: 400 });
       const entrants = await r.zrange('giveaway:entrants', 0, -1);
@@ -162,8 +208,9 @@ export async function POST(request) {
       }
       const proofIds = await r.zrange('proof:all', 0, -1);
       for (const id of proofIds || []) await r.del(`proof:${id}`);
-      await r.del('giveaway:board', 'giveaway:entrants', 'giveaway:feed', 'giveaway:totalEntries', 'proof:pending', 'proof:all', 'giveaway:winners');
+      await r.del('giveaway:board', 'giveaway:entrants', 'giveaway:feed', 'giveaway:totalEntries', 'proof:pending', 'proof:all', 'giveaway:winners', 'giveaway:live:entrants');
       await r.set('giveaway:active', '');
+      await r.set('giveaway:live:active', '');
       await r.set('giveaway:round', 1);
       return Response.json({ success: true, wipedEntrants: (entrants || []).length, wipedProofs: (proofIds || []).length });
     }

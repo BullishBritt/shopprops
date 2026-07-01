@@ -62,6 +62,7 @@ export default function GiveawayPage() {
   const [pLoading, setPLoading] = useState(false);
   const [pError, setPError] = useState('');
   const [pHistory, setPHistory] = useState([]);
+  const [liveLeft, setLiveLeft] = useState(null);
 
   // ── load status + capture ?ref + restore saved entrant ──
   const fetchStatus = useCallback(async (em) => {
@@ -106,7 +107,20 @@ export default function GiveawayPage() {
     return () => clearInterval(i);
   }, [info]);
 
+  // Live-round ticker + light polling so the LIVE banner appears without a reload.
+  useEffect(() => {
+    const savedEmail = () => { try { return localStorage.getItem(STORE_KEY) || ''; } catch { return ''; } };
+    const refetch = setInterval(() => fetchStatus(savedEmail()), 15000);
+    const tick = setInterval(() => {
+      const endsAt = info?.live?.endsAt;
+      if (info?.live?.active && endsAt) setLiveLeft(Math.max(0, Math.round((endsAt - Date.now()) / 1000)));
+      else setLiveLeft(null);
+    }, 1000);
+    return () => { clearInterval(refetch); clearInterval(tick); };
+  }, [info, fetchStatus]);
+
   const isActive = info?.isActive;
+  const liveOn = info?.live?.active && liveLeft != null && liveLeft > 0;
 
   const handleJoin = async () => {
     setError('');
@@ -238,6 +252,7 @@ export default function GiveawayPage() {
         @keyframes glow { 0%,100%{box-shadow:0 0 40px rgba(0,229,255,.10)} 50%{box-shadow:0 0 70px rgba(0,229,255,.22)} }
         @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
         @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
         .fade { animation: fadeUp .6s ease-out both; }
         .glow { animation: glow 3.5s ease-in-out infinite; }
         .gv-input:focus { border-color:${CYAN} !important; }
@@ -267,6 +282,22 @@ export default function GiveawayPage() {
           <a href="/" style={{ ...S.label, textDecoration: 'none', color: MUTED }}>← Back to site</a>
         </div>
       </div>
+
+      {/* ── LIVE ROUND BANNER ── */}
+      {liveOn && (
+        <a href="#enter" style={{ display: 'block', textDecoration: 'none' }}>
+          <div style={{ background: 'linear-gradient(90deg,#dc2626,#ef4444)', color: '#fff', padding: '12px 24px', textAlign: 'center', fontWeight: 700, fontSize: 15, display: 'flex', gap: 12, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#fff', animation: 'pulse 1s infinite' }} /> LIVE GIVEAWAY
+            </span>
+            <span>Enter now — spinning the wheel in</span>
+            <span style={{ fontFamily: "'Space Mono',monospace", background: 'rgba(0,0,0,.25)', padding: '2px 10px', borderRadius: 6 }}>
+              {Math.floor(liveLeft / 60)}:{String(liveLeft % 60).padStart(2, '0')}
+            </span>
+            <span style={{ opacity: .9 }}>· {info?.live?.count ?? 0} in</span>
+          </div>
+        </a>
+      )}
 
       {/* ── HERO ── */}
       <section style={{ maxWidth: 980, margin: '0 auto', padding: '70px 24px 40px', textAlign: 'center' }} className="fade">

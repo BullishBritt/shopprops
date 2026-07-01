@@ -113,6 +113,16 @@ function baseUrlFrom(request) {
   }
 }
 
+// Add an entrant to the current live (spin-the-wheel) pool if a round is
+// open and still within its window. Used by the live TikTok giveaway mode.
+async function addToLivePool(r, email) {
+  try {
+    if (!(await r.get('giveaway:live:active'))) return;
+    const endsAt = Number(await r.get('giveaway:live:endsAt') || 0);
+    if (Date.now() < endsAt) await r.zadd('giveaway:live:entrants', { score: Date.now(), member: email });
+  } catch {}
+}
+
 // ── GET: giveaway status, or a single user's dashboard (?email=) ──
 export async function GET(request) {
   const r = getRedis();
@@ -130,13 +140,17 @@ export async function GET(request) {
   }
 
   try {
-    const [isActive, endDate, totalEntries, totalEntrants, feedRaw] = await Promise.all([
+    const [isActive, endDate, totalEntries, totalEntrants, feedRaw, liveActive, liveEndsAt, liveCount] = await Promise.all([
       r.get('giveaway:active'),
       r.get('giveaway:endDate'),
       r.get('giveaway:totalEntries'),
       r.zcard('giveaway:entrants'),
       r.lrange('giveaway:feed', 0, FEED_MAX - 1),
+      r.get('giveaway:live:active'),
+      r.get('giveaway:live:endsAt'),
+      r.zcard('giveaway:live:entrants'),
     ]);
+    const liveOn = !!liveActive && Date.now() < Number(liveEndsAt || 0);
 
     const payload = {
       isActive: !!isActive,
@@ -147,6 +161,7 @@ export async function GET(request) {
       tasks: TASKS,
       referralBonus: REFERRAL_BONUS,
       feed: (feedRaw || []).map(firstName),
+      live: { active: liveOn, endsAt: liveOn ? Number(liveEndsAt) : null, count: Number(liveCount || 0) },
       configured: true,
     };
 
@@ -225,6 +240,7 @@ export async function POST(request) {
     // Idempotent: returning an existing entrant their dashboard.
     const existing = await loadUser(r, email);
     if (existing) {
+      await addToLivePool(r, email);
       const rank = await rankFor(r, email, existing.entries);
       const totalEntries = Number(await r.get('giveaway:totalEntries') || 0);
       return Response.json({ success: true, alreadyEntered: true, user: publicUser(existing, baseUrl, rank, totalEntries) });
@@ -268,6 +284,8 @@ export async function POST(request) {
         await r.incrby('giveaway:totalEntries', REFERRAL_BONUS);
       }
     }
+
+    await addToLivePool(r, email);
 
     const rank = await rankFor(r, email, 1);
     const totalEntries = Number(await r.get('giveaway:totalEntries') || 0);

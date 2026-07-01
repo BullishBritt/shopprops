@@ -106,6 +106,20 @@ curl ... -d '{"action":"approveProof","id":"p_xxx","bonus":25}'
 curl ... -d '{"action":"rejectProof","id":"p_xxx","reason":"unreadable"}'
 ```
 
+### 🎡 Live spin-the-wheel round (for TikTok / streams)
+Run a live giveaway in front of an audience from the **Live Wheel** tab in `/admin`:
+1. Set the minutes (default 5) and hit **Start round** — this opens a fresh entry window.
+2. Viewers enter at `/giveaway` (a red **LIVE** banner + countdown appears there automatically). Only people who enter *during the window* are on the wheel.
+3. The entrant count updates live; when you're ready, hit **SPIN THE WHEEL**. The winner is chosen server-side (fair random) and the wheel animates to land on them.
+
+Winners are logged to the winner history (flagged `live`). Raw API:
+```bash
+curl ... -d '{"action":"startLive","minutes":5}'   # open a 5-min window
+curl ... -d '{"action":"liveEntrants"}'             # current pool (names)
+curl ... -d '{"action":"drawLive"}'                 # pick + log winner, close round
+curl ... -d '{"action":"stopLive"}'                 # close entries early
+```
+
 ### Weekly winners
 The giveaway tracks a `round` counter and logs every winner.
 
