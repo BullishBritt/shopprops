@@ -185,6 +185,28 @@ export async function POST(request) {
       return Response.json({ success: true });
     }
 
+    if (action === 'loadBuyers') {
+      // Fill the wheel with everyone whose code-proof was APPROVED.
+      // Replaces the current pool and closes any public entry window,
+      // so this becomes a verified-buyers-only wheel.
+      const ids = await r.zrange('proof:all', 0, -1);
+      const emails = new Set();
+      for (const id of ids || []) {
+        const p = await r.hgetall(`proof:${id}`);
+        if (p && p.status === 'approved' && p.email) emails.add(p.email);
+      }
+      if (!emails.size) return Response.json({ error: 'No approved code-proofs yet — approve some in the Proofs tab first.' }, { status: 400 });
+      await r.del('giveaway:live:entrants');
+      await r.set('giveaway:live:active', '');
+      const now = Date.now();
+      let i = 0;
+      for (const em of emails) {
+        await r.zadd('giveaway:live:entrants', { score: now + i, member: em });
+        i++;
+      }
+      return Response.json({ success: true, count: emails.size });
+    }
+
     if (action === 'addLiveName') {
       // Manually put a name on the wheel (admin-only / "only I can add" mode).
       const name = String(body.name || '').trim().slice(0, 40);

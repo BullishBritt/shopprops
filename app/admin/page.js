@@ -87,19 +87,24 @@ export default function AdminPage() {
   // ── API helper ──
   const call = useCallback(async (action, extra = {}, sec) => {
     const s = sec ?? secret;
-    const res = await fetch('/api/giveaway/admin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-admin-secret': s },
-      body: JSON.stringify({ action, ...extra }),
-    });
-    return res.json();
+    try {
+      const res = await fetch('/api/giveaway/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': s },
+        body: JSON.stringify({ action, ...extra }),
+      });
+      return await res.json();
+    } catch {
+      return { error: 'Network problem — check your connection and try again.' };
+    }
   }, [secret]);
 
   const flash = (m, isErr) => { (isErr ? setErr : setMsg)(m); setTimeout(() => { setErr(''); setMsg(''); }, 4000); };
 
+  // Returns true on success, or the server's error message string on failure.
   const loadStats = useCallback(async (sec) => {
     const d = await call('stats', {}, sec);
-    if (d.error) { flash(d.error, true); return false; }
+    if (d.error) return d.error;
     setStats(d);
     return true;
   }, [call]);
@@ -123,6 +128,12 @@ export default function AdminPage() {
     setLiveWinner(null); setWheelEntrants([]); setRotation(0);
     const d = await act('startLive', { minutes: Number(liveMinutes) });
     if (d?.success) { flash(`Live round open for ${d.minutes} min!`); loadLive(); }
+  };
+
+  const loadBuyers = async () => {
+    setLiveWinner(null); setWheelEntrants([]); setRotation(0);
+    const d = await act('loadBuyers');
+    if (d?.success) { flash(`🧾 ${d.count} verified code-user${d.count > 1 ? 's' : ''} loaded onto the wheel`); loadLive(); }
   };
 
   const addName = async () => {
@@ -173,7 +184,7 @@ export default function AdminPage() {
   useEffect(() => {
     let s = '';
     try { s = localStorage.getItem(KEY) || ''; } catch {}
-    if (s) { setSecret(s); loadStats(s).then(ok => { if (ok) setAuthed(true); }); }
+    if (s) { setSecret(s); loadStats(s).then(ok => { if (ok === true) setAuthed(true); }); }
   }, [loadStats]);
 
   const login = async () => {
@@ -182,11 +193,18 @@ export default function AdminPage() {
     setBusy(true);
     const ok = await loadStats(secret);
     setBusy(false);
-    if (ok) {
+    if (ok === true) {
       setAuthed(true);
       try { localStorage.setItem(KEY, secret); } catch {}
     } else {
-      flash('Invalid secret or storage not configured.', true);
+      const m = String(ok || '').toLowerCase();
+      if (m.includes('storage')) {
+        flash('The database isn\'t connected yet — open /status on this site to see exactly what\'s missing.', true);
+      } else if (m.includes('unauthorized')) {
+        flash('Wrong password — it must exactly match GIVEAWAY_ADMIN_SECRET in Vercel (edit it there, Redeploy, then retry).', true);
+      } else {
+        flash(ok || 'Something went wrong — try again.', true);
+      }
     }
   };
 
@@ -239,6 +257,7 @@ export default function AdminPage() {
           {err && <p style={{ color: RED, fontSize: 12, marginBottom: 12 }}>{err}</p>}
           <button style={{ ...S.btn, width: '100%' }} onClick={login} disabled={busy}>{busy ? 'Checking…' : 'Sign in'}</button>
           <p style={{ ...S.label, marginTop: 16, lineHeight: 1.6 }}>Set <code style={{ color: TEXT }}>GIVEAWAY_ADMIN_SECRET</code> in Vercel env to enable.</p>
+          <a href="/status" style={{ ...S.label, display: 'block', marginTop: 10, color: CYAN, textDecoration: 'none' }}>Trouble signing in? Run the setup checkup →</a>
         </div>
       </div>
     );
@@ -307,7 +326,7 @@ export default function AdminPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.2fr)', gap: 16, alignItems: 'start' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={S.card}>
-                <div style={{ ...S.label, marginBottom: 12 }}>Live round — for TikTok / streams</div>
+                <div style={{ ...S.label, marginBottom: 12 }}>Wheel 1 — live round (random giveaway on stream)</div>
                 <p style={{ color: MUTED, fontSize: 13, marginBottom: 14, lineHeight: 1.5 }}>
                   Start a round, viewers get a window to enter at <strong style={{ color: TEXT }}>/giveaway</strong>, then spin. Only people who enter <em>during the window</em> are on the wheel.
                 </p>
@@ -318,6 +337,14 @@ export default function AdminPage() {
                   <button style={{ ...S.btn, background: GREEN, color: '#04210f' }} disabled={busy} onClick={startLive}>▶ Start round</button>
                   {liveInfo?.active && <button style={{ ...S.ghost, color: AMBER, borderColor: AMBER + '50' }} onClick={async () => { await act('stopLive'); loadLive(); }}>⏸ Close entries</button>}
                 </div>
+              </div>
+
+              <div style={{ ...S.card, borderColor: GREEN + '30' }}>
+                <div style={{ ...S.label, marginBottom: 12, color: GREEN }}>Wheel 2 — code users (verified buyers)</div>
+                <p style={{ color: MUTED, fontSize: 13, marginBottom: 14, lineHeight: 1.5 }}>
+                  One click puts everyone with an <strong style={{ color: TEXT }}>approved receipt</strong> (they used your code) onto the wheel automatically. No entry window — just load and spin.
+                </p>
+                <button style={{ ...S.btn }} disabled={busy} onClick={loadBuyers}>🧾 Load code-users onto wheel</button>
               </div>
 
               <div style={S.card}>
