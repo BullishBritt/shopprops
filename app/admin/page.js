@@ -36,6 +36,13 @@ function Wheel({ entrants, rotation, spinning }) {
       <svg viewBox="0 0 400 400" style={{ width: '100%', transform: `rotate(${rotation}deg)`, transition: spinning ? 'transform 5.5s cubic-bezier(.17,.67,.16,1)' : 'none' }}>
         {entrants.length === 0 ? (
           <circle cx={cx} cy={cy} r={R} fill="#0c1119" stroke="#151d2b" strokeWidth="2" />
+        ) : entrants.length === 1 ? (
+          <g>
+            <circle cx={cx} cy={cy} r={R} fill={WHEEL_COLORS[0]} stroke="#070b11" strokeWidth="1.5" />
+            <text x={cx} y={cy - R * 0.55} fill="#04210f" fontSize="16" fontWeight="700" textAnchor="middle" dominantBaseline="middle" style={{ fontFamily: "'Outfit',sans-serif" }}>
+              {(entrants[0].name || '').slice(0, 14)}
+            </text>
+          </g>
         ) : entrants.map((e, i) => {
           const [x1, y1] = toXY(i * seg, R);
           const [x2, y2] = toXY((i + 1) * seg, R);

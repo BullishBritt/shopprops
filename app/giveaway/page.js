@@ -84,6 +84,7 @@ export default function GiveawayPage() {
       const r = params.get('ref');
       if (r) setRef(r.toUpperCase().slice(0, 8));
       savedEmail = localStorage.getItem(STORE_KEY) || '';
+      if (savedEmail) setEmail(savedEmail); // returning visitor: restore for tasks/proofs
     } catch {}
     fetchStatus(savedEmail);
   }, [fetchStatus]);

@@ -90,6 +90,7 @@ async function rankFor(r, email, entries) {
 function publicUser(u, baseUrl, rank, totalEntries) {
   return {
     name: u.name,
+    email: u.email,
     firstName: firstName(u.name),
     code: u.code,
     entries: u.entries,
