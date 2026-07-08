@@ -36,7 +36,7 @@ git push -u origin main
 
 ## Affiliate Links
 Currently configured:
-- Lucid Trading: `lucidtrading.com/ref/BullishBritt`
+- Lucid Trading: `lucidtrading.com/ref/Britt`
 - Tradeify: `tradeify.co/?ref=britt`
 - Top One Futures: `toponefutures.com/...sourceId=britt`
 - Alpha Futures: `app.alpha-futures.com/signup/Brittain001578/`
