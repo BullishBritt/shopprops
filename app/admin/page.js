@@ -20,11 +20,34 @@ const TEXT = '#cbd5e1';
 const KEY = 'shopprops_admin_secret';
 const WHEEL_COLORS = ['#00e5ff', '#22c55e', '#0ea5e9', '#14b8a6', '#38bdf8', '#4ade80'];
 
-// ── Spin-the-wheel (live giveaway) ──────────────────────────────
+// ── Spin-the-wheel ──────────────────────────────────────────────
+// Slices can be weighted: pass entrants with a `weight` (e.g. entry
+// count) and bigger weights get bigger slices. No weight = equal slices.
+function wheelWeights(list) {
+  return list.map(e => Math.max(1, Number(e.weight) || 1));
+}
+
+// Mid-angle (degrees from top, clockwise) of slice `idx` — used to land
+// the winner's slice under the pointer.
+function midAngleOf(list, idx) {
+  const ws = wheelWeights(list);
+  const total = ws.reduce((s, w) => s + w, 0) || 1;
+  let acc = 0;
+  for (let i = 0; i < idx; i++) acc += ws[i];
+  return ((acc + ws[idx] / 2) / total) * 360;
+}
+
 function Wheel({ entrants, rotation, spinning }) {
   const R = 190, cx = 200, cy = 200;
-  const n = Math.max(entrants.length, 1);
-  const seg = 360 / n;
+  const n = entrants.length;
+  const ws = wheelWeights(entrants);
+  const total = ws.reduce((s, w) => s + w, 0) || 1;
+  let acc = 0;
+  const segs = entrants.map((e, i) => {
+    const start = (acc / total) * 360;
+    acc += ws[i];
+    return { start, end: (acc / total) * 360 };
+  });
   const toXY = (deg, rad) => {
     const a = ((-90 + deg) * Math.PI) / 180; // 0° at top, clockwise
     return [cx + rad * Math.cos(a), cy + rad * Math.sin(a)];
@@ -44,16 +67,18 @@ function Wheel({ entrants, rotation, spinning }) {
             </text>
           </g>
         ) : entrants.map((e, i) => {
-          const [x1, y1] = toXY(i * seg, R);
-          const [x2, y2] = toXY((i + 1) * seg, R);
-          const large = seg > 180 ? 1 : 0;
-          const [lx, ly] = toXY(i * seg + seg / 2, R * 0.62);
-          const mid = i * seg + seg / 2;
+          const { start, end } = segs[i];
+          const sweep = end - start;
+          const [x1, y1] = toXY(start, R);
+          const [x2, y2] = toXY(end, R);
+          const large = sweep > 180 ? 1 : 0;
+          const mid = (start + end) / 2;
+          const [lx, ly] = toXY(mid, R * 0.62);
           const label = (e.name || '').slice(0, 14);
           return (
             <g key={i}>
               <path d={`M${cx},${cy} L${x1},${y1} A${R},${R} 0 ${large} 1 ${x2},${y2} Z`} fill={WHEEL_COLORS[i % WHEEL_COLORS.length]} stroke="#070b11" strokeWidth="1.5" />
-              {n <= 40 && (
+              {n <= 40 && sweep >= 7 && (
                 <text x={lx} y={ly} fill="#04210f" fontSize={n > 24 ? 9 : 12} fontWeight="700" textAnchor="middle" dominantBaseline="middle"
                   transform={`rotate(${mid}, ${lx}, ${ly})`} style={{ fontFamily: "'Outfit',sans-serif" }}>{label}</text>
               )}
@@ -163,12 +188,24 @@ export default function AdminPage() {
     setWheelEntrants(list);
     setLiveWinner(null);
     // land the winner's slice under the top pointer, after several full spins
-    const n = Math.max(list.length, 1);
-    const seg = 360 / n;
-    const target = 360 * 8 - (d.winnerIndex + 0.5) * seg;
+    const target = 360 * 8 - midAngleOf(list, d.winnerIndex);
     setSpinning(true);
     setRotation(prev => prev - (prev % 360) + target); // normalize then add
     setTimeout(() => { setSpinning(false); setLiveWinner(d.winner); flash(`🎉 Winner: ${d.winner.name}`); loadStats(); loadWinners(); }, 5600);
+  };
+
+  // Weekly Friday wheel: everyone in the giveaway, slice size = entries.
+  const spinWeekly = async () => {
+    if (spinning) return;
+    const d = await act('drawWeekly', { excludePastWinners: excludePast });
+    if (!d?.success) return;
+    const list = d.entrants || [];
+    setWheelEntrants(list);
+    setLiveWinner(null);
+    const target = 360 * 8 - midAngleOf(list, d.winnerIndex);
+    setSpinning(true);
+    setRotation(prev => prev - (prev % 360) + target);
+    setTimeout(() => { setSpinning(false); setLiveWinner(d.winner); flash(`🎉 Weekly winner: ${d.winner.name}`); loadStats(); loadWinners(); }, 5600);
   };
 
   // poll the live pool + run the entry-window countdown
@@ -295,7 +332,7 @@ export default function AdminPage() {
 
         {/* tabs */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-          {[['overview', 'Overview'], ['live', '🎡 Live Wheel'], ['proofs', `Proofs${stats?.pendingProofs ? ` (${stats.pendingProofs})` : ''}`], ['winners', 'Winners'], ['controls', 'Controls']].map(([k, l]) => (
+          {[['overview', 'Overview'], ['live', '🎡 Wheels'], ['proofs', `Proofs${stats?.pendingProofs ? ` (${stats.pendingProofs})` : ''}`], ['winners', 'Winners'], ['controls', 'Controls']].map(([k, l]) => (
             <button key={k} onClick={() => setTab(k)} style={{ ...S.ghost, ...(tab === k ? { color: CYAN, borderColor: CYAN } : {}) }}>{l}</button>
           ))}
         </div>
@@ -332,6 +369,19 @@ export default function AdminPage() {
         {tab === 'live' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.2fr)', gap: 16, alignItems: 'start' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ ...S.card, borderColor: CYAN + '40' }}>
+                <div style={{ ...S.label, marginBottom: 12, color: CYAN }}>🗓 Weekly wheel — Friday drawing</div>
+                <p style={{ color: MUTED, fontSize: 13, marginBottom: 14, lineHeight: 1.5 }}>
+                  Puts <strong style={{ color: TEXT }}>everyone entered</strong> on the wheel — slice size matches their entries, so people who uploaded receipts get visibly bigger slices. One click loads and spins.
+                </p>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <label style={{ fontSize: 13, color: MUTED, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <input type="checkbox" checked={excludePast} onChange={e => setExcludePast(e.target.checked)} style={{ accentColor: CYAN }} /> Exclude past winners
+                  </label>
+                  <button style={S.btn} disabled={busy || spinning} onClick={spinWeekly}>🗓 SPIN WEEKLY WHEEL</button>
+                </div>
+              </div>
+
               <div style={S.card}>
                 <div style={{ ...S.label, marginBottom: 12 }}>Wheel 1 — live round (random giveaway on stream)</div>
                 <p style={{ color: MUTED, fontSize: 13, marginBottom: 14, lineHeight: 1.5 }}>

@@ -185,6 +185,41 @@ export async function POST(request) {
       return Response.json({ success: true });
     }
 
+    if (action === 'drawWeekly') {
+      // Weekly Friday wheel: EVERY entrant, slice size weighted by entries.
+      // Picks the winner server-side (weighted random), logs it, and returns
+      // the full pool + winnerIndex so the wheel can animate the landing.
+      const board = await r.zrange('giveaway:board', 0, -1, { withScores: true });
+      let pool = [];
+      for (let i = 0; i < (board || []).length; i += 2) pool.push({ email: board[i], entries: Number(board[i + 1]) });
+      if (body.excludePastWinners) {
+        const past = await r.lrange('giveaway:winners', 0, -1);
+        const pastEmails = new Set((past || []).map(w => { try { return JSON.parse(w).email; } catch { return null; } }));
+        pool = pool.filter(p => !pastEmails.has(p.email));
+      }
+      if (!pool.length) return Response.json({ error: 'No eligible entrants yet.' }, { status: 400 });
+
+      const total = pool.reduce((s, p) => s + p.entries, 0);
+      let roll = Math.random() * total, winnerIndex = 0;
+      for (let i = 0; i < pool.length; i++) { roll -= pool[i].entries; if (roll <= 0) { winnerIndex = i; break; } }
+
+      // Resolve display names (capped so huge pools stay fast).
+      const entrants = [];
+      for (let i = 0; i < pool.length; i++) {
+        let name = String(pool[i].email).split('@')[0];
+        if (i < 150) {
+          const u = await loadUser(r, pool[i].email);
+          if (u?.name) name = u.name;
+        }
+        entrants.push({ member: pool[i].email, name, email: pool[i].email, weight: pool[i].entries });
+      }
+
+      const round = Number(await r.get('giveaway:round') || 1);
+      const winner = { email: pool[winnerIndex].email, name: entrants[winnerIndex].name, entries: pool[winnerIndex].entries, round, weekly: true, ts: Date.now() };
+      await r.lpush('giveaway:winners', JSON.stringify(winner));
+      return Response.json({ success: true, entrants, winnerIndex, winner, round });
+    }
+
     if (action === 'loadBuyers') {
       // Fill the wheel with everyone whose code-proof was APPROVED.
       // Replaces the current pool and closes any public entry window,

@@ -463,9 +463,12 @@ export default function GiveawayPage() {
           <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 30, color: '#fff', letterSpacing: 1, textAlign: 'center', marginBottom: 6 }}>
             Used code <span style={{ color: GREEN }}>{PROMO}</span>? Get +{PROOF_BONUS} entries
           </h2>
-          <p style={{ textAlign: 'center', color: MUTED, fontSize: 14, marginBottom: 22 }}>
+          <p style={{ textAlign: 'center', color: MUTED, fontSize: 14, marginBottom: 6 }}>
             Bought a prop firm eval with code <strong style={{ color: TEXT }}>{PROMO}</strong>? Upload your receipt or order screenshot.
             Once we verify it, {PROOF_BONUS} bonus entries get added to your name.
+          </p>
+          <p style={{ textAlign: 'center', color: GREEN, fontSize: 13, fontWeight: 600, marginBottom: 22 }}>
+            Every purchase counts — upload a receipt for EACH account you buy. +{PROOF_BONUS} every time. 🔁
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
