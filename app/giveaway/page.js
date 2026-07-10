@@ -392,18 +392,44 @@ export default function GiveawayPage() {
         </div>
       )}
 
+      {/* ── TWO WAYS TO WIN ── */}
+      <section style={{ maxWidth: 1000, margin: '0 auto', padding: '56px 24px 0' }}>
+        <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(2rem,5vw,3rem)', color: '#fff', textAlign: 'center', letterSpacing: 1, marginBottom: 28 }}>Two Ways To Win</h2>
+        <div style={{ display: 'grid', gap: 18, gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))' }}>
+          <div style={{ ...S.card, padding: 28 }}>
+            <div style={{ fontSize: 34, marginBottom: 10 }}>🗓</div>
+            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 26, color: '#fff', letterSpacing: 0.5, marginBottom: 8 }}>The Weekly Giveaway</div>
+            <p style={{ color: MUTED, fontSize: 14, lineHeight: 1.6 }}>
+              Enter once below and you're in <strong style={{ color: TEXT }}>every weekly drawing</strong>. Stack entries with referrals and receipts — every entry is a bigger slice of the wheel. Winner spun every week.
+            </p>
+          </div>
+          <div style={{ ...S.card, padding: 28, borderColor: liveOn ? '#ef4444' : '#ef444430' }}>
+            <div style={{ fontSize: 34, marginBottom: 10 }}>🔴</div>
+            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 26, color: '#fff', letterSpacing: 0.5, marginBottom: 8 }}>
+              The Live Giveaway {liveOn && <span style={{ color: '#ef4444', fontSize: 18 }}>· LIVE NOW!</span>}
+            </div>
+            <p style={{ color: MUTED, fontSize: 14, lineHeight: 1.6 }}>
+              {liveOn
+                ? <>A live wheel is running RIGHT NOW — scroll up and hit the red banner to get on it before the timer ends! 🎡</>
+                : <>Happens during our <strong style={{ color: TEXT }}>TikTok lives</strong>. When one starts, a red JOIN banner appears at the top of this page — enter fast, and the wheel spins on stream. Currently off-air — follow us so you don't miss the next one.</>}
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* ── PRIZES ── */}
       {prizes.length > 0 && (
         <section style={{ maxWidth: 1000, margin: '0 auto', padding: '64px 24px 24px' }}>
-          <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(2rem,5vw,3rem)', color: '#fff', textAlign: 'center', letterSpacing: 1, marginBottom: 8 }}>The Prize Pool</h2>
-          <p style={{ textAlign: 'center', color: MUTED, marginBottom: 36 }}>Three winners. Real funded capital.</p>
-          <div style={{ display: 'grid', gap: 18, gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))' }}>
+          <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(2rem,5vw,3rem)', color: '#fff', textAlign: 'center', letterSpacing: 1, marginBottom: 8 }}>The Prize: A Funded Account</h2>
+          <p style={{ textAlign: 'center', color: MUTED, marginBottom: 36 }}>
+            Every giveaway, one of these accounts gets given away. Which one? <strong style={{ color: '#fff' }}>You never know until we spin. 👀</strong>
+          </p>
+          <div style={{ display: 'grid', gap: 18, gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))' }}>
             {prizes.map((p, i) => (
-              <div key={p.place} className="gv-prize" style={{ ...S.card, padding: 28, textAlign: 'center', transition: 'all .3s', borderColor: i === 0 ? `${CYAN}40` : BORDER, ...(i === 0 ? { animation: 'glow 3.5s ease-in-out infinite' } : {}) }}>
+              <div key={p.title} className="gv-prize" style={{ ...S.card, padding: 28, textAlign: 'center', transition: 'all .3s', borderColor: i === prizes.length - 1 ? `${CYAN}40` : BORDER, ...(i === prizes.length - 1 ? { animation: 'glow 3.5s ease-in-out infinite' } : {}) }}>
                 <div style={{ fontSize: 44, marginBottom: 10 }}>{p.emoji}</div>
-                <div style={{ ...S.label, color: i === 0 ? CYAN : MUTED, marginBottom: 8 }}>{p.place} Place</div>
-                <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 30, color: '#fff', letterSpacing: 0.5, lineHeight: 1 }}>{p.title}</div>
-                <div style={{ fontFamily: "'Space Mono',monospace", fontSize: 22, color: i === 0 ? CYAN : '#fff', margin: '10px 0' }}>{p.value}</div>
+                <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#fff', letterSpacing: 0.5, lineHeight: 1 }}>{p.title}</div>
+                <div style={{ fontFamily: "'Space Mono',monospace", fontSize: 22, color: i === prizes.length - 1 ? CYAN : '#fff', margin: '10px 0' }}>{p.value}</div>
                 <p style={{ color: MUTED, fontSize: 14, lineHeight: 1.5 }}>{p.desc}</p>
               </div>
             ))}

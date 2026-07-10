@@ -33,10 +33,13 @@ const TASKS = {
 };
 
 // Prize lineup shown on the landing page (server is the source of truth).
+// Mystery model: every giveaway awards ONE funded account — winners never
+// know which size until the spin.
 const PRIZES = [
-  { place: '1st', emoji: '🏆', title: '$150K Funded Account', value: '$150,000', desc: 'A fully funded prop firm evaluation of the winner\'s choice — or the cash equivalent.' },
-  { place: '2nd', emoji: '🥈', title: '$50K Funded Account', value: '$50,000', desc: 'A 50K evaluation at any partner prop firm, activation fees covered.' },
-  { place: '3rd', emoji: '🥉', title: '$250 Trading Credit', value: '$250', desc: 'Store credit toward any prop firm evaluation on ShopProps.' },
+  { emoji: '💵', title: '$25K Funded Account', value: '$25,000', desc: 'Could be this one.' },
+  { emoji: '💰', title: '$50K Funded Account', value: '$50,000', desc: 'Could be this one.' },
+  { emoji: '🚀', title: '$100K Funded Account', value: '$100,000', desc: 'Could be this one.' },
+  { emoji: '🏆', title: '$150K Funded Account', value: '$150,000', desc: 'Or even this one.' },
 ];
 
 // ── Redis bootstrap (degrades gracefully when env is missing) ──
