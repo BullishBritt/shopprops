@@ -162,12 +162,6 @@ export default function AdminPage() {
     if (d?.success) { flash(`Live round open for ${d.minutes} min!`); loadLive(); }
   };
 
-  const loadBuyers = async () => {
-    setLiveWinner(null); setWheelEntrants([]); setRotation(0);
-    const d = await act('loadBuyers');
-    if (d?.success) { flash(`🧾 ${d.count} verified code-user${d.count > 1 ? 's' : ''} loaded onto the wheel`); loadLive(); }
-  };
-
   const addName = async () => {
     if (!liveName.trim()) return;
     const d = await act('addLiveName', { name: liveName.trim() });
@@ -372,7 +366,7 @@ export default function AdminPage() {
               <div style={{ ...S.card, borderColor: CYAN + '40' }}>
                 <div style={{ ...S.label, marginBottom: 12, color: CYAN }}>🗓 Weekly wheel — Friday drawing</div>
                 <p style={{ color: MUTED, fontSize: 13, marginBottom: 14, lineHeight: 1.5 }}>
-                  Puts <strong style={{ color: TEXT }}>everyone entered</strong> on the wheel — slice size matches their entries, so people who uploaded receipts get visibly bigger slices. One click loads and spins.
+                  Puts <strong style={{ color: TEXT }}>everyone entered</strong> on the wheel. Slice size = their entries, so code users with approved receipts (+25 each) get visibly bigger slices — buyers and free entrants share one wheel, weighted fairly. One click loads and spins.
                 </p>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                   <label style={{ fontSize: 13, color: MUTED, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -383,7 +377,7 @@ export default function AdminPage() {
               </div>
 
               <div style={S.card}>
-                <div style={{ ...S.label, marginBottom: 12 }}>Wheel 1 — live round (random giveaway on stream)</div>
+                <div style={{ ...S.label, marginBottom: 12 }}>🔴 Live wheel — random giveaway on stream</div>
                 <p style={{ color: MUTED, fontSize: 13, marginBottom: 14, lineHeight: 1.5 }}>
                   Start a round, viewers get a window to enter at <strong style={{ color: TEXT }}>/giveaway</strong>, then spin. Only people who enter <em>during the window</em> are on the wheel.
                 </p>
@@ -394,14 +388,6 @@ export default function AdminPage() {
                   <button style={{ ...S.btn, background: GREEN, color: '#04210f' }} disabled={busy} onClick={startLive}>▶ Start round</button>
                   {liveInfo?.active && <button style={{ ...S.ghost, color: AMBER, borderColor: AMBER + '50' }} onClick={async () => { await act('stopLive'); loadLive(); }}>⏸ Close entries</button>}
                 </div>
-              </div>
-
-              <div style={{ ...S.card, borderColor: GREEN + '30' }}>
-                <div style={{ ...S.label, marginBottom: 12, color: GREEN }}>Wheel 2 — code users (verified buyers)</div>
-                <p style={{ color: MUTED, fontSize: 13, marginBottom: 14, lineHeight: 1.5 }}>
-                  One click puts everyone with an <strong style={{ color: TEXT }}>approved receipt</strong> (they used your code) onto the wheel automatically. No entry window — just load and spin.
-                </p>
-                <button style={{ ...S.btn }} disabled={busy} onClick={loadBuyers}>🧾 Load code-users onto wheel</button>
               </div>
 
               <div style={S.card}>

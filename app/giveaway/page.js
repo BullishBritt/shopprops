@@ -62,6 +62,7 @@ export default function GiveawayPage() {
   const [pError, setPError] = useState('');
   const [pHistory, setPHistory] = useState([]);
   const [liveLeft, setLiveLeft] = useState(null);
+  const [liveJoinedAt, setLiveJoinedAt] = useState(null); // which round (endsAt) we joined
 
   // ── load status + capture ?ref + restore saved entrant ──
   const fetchStatus = useCallback(async (em) => {
@@ -139,7 +140,11 @@ export default function GiveawayPage() {
         setUser(data.user);
         try { localStorage.setItem(STORE_KEY, email.trim().toLowerCase()); } catch {}
         fetchStatus(email.trim().toLowerCase());
-        setToast(data.alreadyEntered ? 'Welcome back — here\'s your dashboard.' : 'You\'re in! Share your link for more entries 🎉');
+        const onLive = info?.live?.active && info?.live?.endsAt && Date.now() < info.live.endsAt;
+        if (onLive) setLiveJoinedAt(info.live.endsAt);
+        setToast(onLive
+          ? "🎡 You're on the live wheel — good luck!"
+          : data.alreadyEntered ? 'Welcome back — here\'s your dashboard.' : 'You\'re in! Share your link for more entries 🎉');
         setTimeout(() => setToast(''), 4000);
       } else {
         setError(data.error || 'Something went wrong.');
@@ -147,6 +152,30 @@ export default function GiveawayPage() {
     } catch {
       setError('Something went wrong. Try again.');
     }
+    setLoading(false);
+  };
+
+  // One-tap re-entry onto a new live wheel for someone already signed up.
+  // The server treats a repeat join as "already entered" and simply adds
+  // them to the current live pool — no duplicate account, no retyping.
+  const joinLive = async () => {
+    const nm = (user?.name || name || '').trim();
+    const em = (user?.email || email || '').trim().toLowerCase();
+    if (!em) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/giveaway', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'join', name: nm, email: em }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLiveJoinedAt(info?.live?.endsAt || true);
+        setToast("🎡 You're on the wheel — good luck!");
+        setTimeout(() => setToast(''), 4000);
+      }
+    } catch {}
     setLoading(false);
   };
 
@@ -408,6 +437,22 @@ export default function GiveawayPage() {
           </div>
         ) : (
           <div style={{ ...S.card, padding: 36 }} className="fade">
+            {liveOn && (
+              <button
+                onClick={joinLive}
+                disabled={loading || liveJoinedAt === info?.live?.endsAt}
+                style={{
+                  width: '100%', marginBottom: 22, padding: '16px', border: 'none', borderRadius: 10,
+                  background: liveJoinedAt === info?.live?.endsAt ? '#14532d' : 'linear-gradient(90deg,#dc2626,#ef4444)',
+                  color: '#fff', fontWeight: 800, fontSize: 16, cursor: liveJoinedAt === info?.live?.endsAt ? 'default' : 'pointer',
+                  fontFamily: "'Outfit',sans-serif",
+                }}
+              >
+                {liveJoinedAt === info?.live?.endsAt
+                  ? "✓ You're on the wheel — watch the stream!"
+                  : loading ? 'Joining…' : '🔴 TAP TO JOIN THE LIVE WHEEL'}
+              </button>
+            )}
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
               <div style={{ ...S.label, color: GREEN }}>✓ You're entered, {user.firstName}</div>
               <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 64, color: CYAN, lineHeight: 1, margin: '8px 0' }}>{user.entries}</div>
